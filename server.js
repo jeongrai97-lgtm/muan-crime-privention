@@ -7,6 +7,7 @@ const fs = require('fs');
 const helmet = require('helmet');
 const multer = require('multer');
 const Database = require('better-sqlite3');
+const bcrypt = require('bcryptjs');
 const ffmpegPath = require('ffmpeg-static');
 const { spawn } = require('child_process');
 const { v2: cloudinary } = require('cloudinary');
@@ -14,7 +15,8 @@ const { v2: cloudinary } = require('cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
-const ADMIN_PASSWORD = 'muan0346';
+const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
+const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
@@ -52,6 +54,8 @@ const db = new Database(path.join(__dirname, 'crime_guide.db'));
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    author_id INTEGER,
+    author_name TEXT,
     category TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -61,6 +65,37 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN author_name TEXT;`);
+} catch (e) {}
+
+const superadminExists = db.prepare(
+  `SELECT * FROM admins WHERE username = ?`
+).get('superadmin');
+
+if (!superadminExists) {
+  const hash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
+  db.prepare(`
+    INSERT INTO admins (username, password_hash, display_name, role)
+    VALUES (?, ?, ?, ?)
+  `).run('superadmin', hash, '범죄예방대응과', 'superadmin');
+}
 
 // 기존 카테고리 구조를 최신 구조로 자동 정리
 db.exec(`
@@ -213,17 +248,45 @@ app.get('/category/:category', (req, res) => {
   });
 });
 
-app.get('/admin/login', (req, res) => {
-  res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
+app.post('/admin/login', (req, res) => {
+  const { username, password } = req.body;
+
+  const admin = db.prepare(`
+    SELECT * FROM admins
+    WHERE username = ? AND is_active = 1
+  `).get(username);
+
+  if (!admin) {
+    return res.render('login', {
+      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
+      isAdmin: false
+    });
+  }
+
+  const ok = bcrypt.compareSync(password, admin.password_hash);
+
+  if (!ok) {
+    return res.render('login', {
+      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
+      isAdmin: false
+    });
+  }
+
+  req.session.isAdmin = true;
+  req.session.adminId = admin.id;
+  req.session.adminRole = admin.role;
+  req.session.adminName = admin.display_name;
+  req.session.adminUsername = admin.username;
+
+  return res.redirect('/admin');
 });
 
-app.post('/admin/login', (req, res) => {
-  if (req.body.password === 'muan0346') {
-    req.session.isAdmin = true;
-    return res.redirect('/admin');
+function requireSuperAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin && req.session.adminRole === 'superadmin') {
+    return next();
   }
-  return res.render('login', { error: '비밀번호가 올바르지 않습니다.', isAdmin: false });
-});
+  return res.status(403).send('권한이 없습니다.');
+}
 
 app.get('/admin/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
@@ -303,8 +366,15 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       UPDATE posts
       SET category = ?, title = ?, content = ?, media_path = ?, media_type = ?
       WHERE id = ?
-    `).run(category, title.trim(), content.trim(), mediaPath, mediaType, req.params.id);
-
+    `).run(
+  category,
+  title.trim(),
+  content.trim(),
+  mediaPath,
+  mediaType,
+  req.session.adminId || null,
+  req.session.adminName || '무안경찰서'
+);
     return res.redirect('/category/' + category);
   });
 });
@@ -350,8 +420,8 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     const mediaType = req.file ? getMediaKind(req.file.mimetype) : '';
 
     db.prepare(`
-      INSERT INTO posts (category, title, content, media_path, media_type)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
+VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(category, title.trim(), content.trim(), mediaPath, mediaType);
 
     return res.redirect('/category/' + category);

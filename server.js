@@ -246,10 +246,6 @@ app.get('/', (req, res) => {
 });
 
 app.get('/category/:category', (req, res) => {
-
-app.get('/admin/login', (req, res) => {
-  res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
-});
   const info = categoryInfo(req.params.category);
   if (!info) return res.status(404).send('존재하지 않는 카테고리입니다.');
 
@@ -264,6 +260,10 @@ app.get('/admin/login', (req, res) => {
     posts,
     isAdmin: !!req.session.isAdmin
   });
+});
+
+app.get('/admin/login', (req, res) => {
+  res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
 });
 
 app.post('/admin/login', (req, res) => {

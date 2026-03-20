@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
 const express = require('express');
 const session = require('express-session');
@@ -7,11 +7,13 @@ const fs = require('fs');
 const helmet = require('helmet');
 const multer = require('multer');
 const Database = require('better-sqlite3');
+const ffmpegPath = require('ffmpeg-static');
+const { spawn } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
-const ADMIN_PASSWORD = 'muan0346';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
@@ -89,6 +91,48 @@ function getMediaKind(mimetype) {
   return '';
 }
 
+function deleteFileSafe(filePath) {
+  if (!filePath) return;
+  if (fs.existsSync(filePath)) {
+    try { fs.unlinkSync(filePath); } catch (e) {}
+  }
+}
+
+function transcodeVideoToMp4(inputPath) {
+  return new Promise((resolve, reject) => {
+    if (!ffmpegPath) return reject(new Error('ffmpeg 실행 파일을 찾을 수 없습니다.'));
+
+    const outputPath = inputPath.replace(/\.[^.]+$/, '') + '_ios.mp4';
+    const args = [
+      '-y',
+      '-i', inputPath,
+      '-c:v', 'libx264',
+      '-preset', 'veryfast',
+      '-movflags', '+faststart',
+      '-pix_fmt', 'yuv420p',
+      '-profile:v', 'main',
+      '-level', '3.1',
+      '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      outputPath
+    ];
+
+    const proc = spawn(ffmpegPath, args);
+    let stderr = '';
+
+    proc.stderr.on('data', data => {
+      stderr += data.toString();
+    });
+
+    proc.on('error', err => reject(err));
+    proc.on('close', code => {
+      if (code === 0) resolve(outputPath);
+      else reject(new Error('영상 자동 변환 실패: ' + stderr));
+    });
+  });
+}
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -141,7 +185,7 @@ app.get('/admin/login', (req, res) => {
 });
 
 app.post('/admin/login', (req, res) => {
-  if (req.body.password === 'muan0346') {
+  if (req.body.password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
     return res.redirect('/admin');
   }
@@ -166,7 +210,7 @@ app.get('/admin/posts/:id/edit', requireAdmin, (req, res) => {
 });
 
 app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
-  upload.single('media')(req, res, function(err) {
+  upload.single('media')(req, res, async function(err) {
     const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
     if (!post) return res.redirect('/admin');
 
@@ -194,9 +238,7 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
 
     if (delete_media === '1' && mediaPath) {
       const oldPath = path.join(publicDir, mediaPath.replace(/^\//, ''));
-      if (fs.existsSync(oldPath)) {
-        try { fs.unlinkSync(oldPath); } catch (e) {}
-      }
+      deleteFileSafe(oldPath);
       mediaPath = '';
       mediaType = '';
     }
@@ -204,12 +246,27 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
     if (req.file) {
       if (mediaPath) {
         const oldPath = path.join(publicDir, mediaPath.replace(/^\//, ''));
-        if (fs.existsSync(oldPath)) {
-          try { fs.unlinkSync(oldPath); } catch (e) {}
-        }
+        deleteFileSafe(oldPath);
       }
+
       mediaPath = `/uploads/${req.file.filename}`;
       mediaType = getMediaKind(req.file.mimetype);
+
+      if (mediaType === 'video') {
+        try {
+          const convertedPath = await transcodeVideoToMp4(req.file.path);
+          deleteFileSafe(req.file.path);
+          mediaPath = `/uploads/${path.basename(convertedPath)}`;
+        } catch (e) {
+          deleteFileSafe(req.file.path);
+          return res.status(400).render('edit', {
+            post,
+            categories,
+            isAdmin: true,
+            error: e.message || '영상 자동 변환 중 오류가 발생했습니다.'
+          });
+        }
+      }
     }
 
     db.prepare(`

@@ -24,7 +24,7 @@
                    style="cursor:zoom-in;">
             <% } %>
             <% if (post.media_path && post.media_type === 'video') { %>
-              <video class="post-video" controls playsinline preload="metadata">
+              <video class="post-video" controls playsinline preload="metadata" webkit-playsinline>
                 <source src="<%= post.media_path %>">
               </video>
             <% } %>

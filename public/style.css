@@ -277,9 +277,21 @@ textarea{
 .post-video{
   width:100%;
   height:auto;
-  max-height:700px;
+  max-height:80vh;
   background:#000;
   display:block;
   object-fit:contain;
   border-bottom:1px solid #edf1f7;
+  aspect-ratio:auto;
+}
+
+
+/* 세로 영상 최적화 */
+.post-card video{
+  margin:0 auto;
+}
+@media (max-width:700px){
+  .post-video{
+    max-height:70vh;
+  }
 }

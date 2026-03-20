@@ -246,7 +246,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/category/:category', (req, res) => {
-  app.get('/admin/login', (req, res) => {
+
+app.get('/admin/login', (req, res) => {
   res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
 });
   const info = categoryInfo(req.params.category);
@@ -409,44 +410,6 @@ app.get('/admin', requireAdmin, (req, res) => {
 });
 
 app.post('/admin/posts', requireAdmin, (req, res) => {
-  upload.single('media')(req, res, function(err) {
-    const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
-
-    if (err) {
-      return res.status(400).render('admin', {
-        categories,
-        posts,
-        isAdmin: true,
-        error: err.message || '업로드 중 오류가 발생했습니다.',
-        success: ''
-      });
-    }
-
-    const { category, title, content } = req.body;
-
-    if (!category || !title || !content) {
-      return res.status(400).render('admin', {
-        categories,
-        posts,
-        isAdmin: true,
-        error: '카테고리, 제목, 내용을 모두 입력해주세요.',
-        success: ''
-      });
-    }
-
-    const mediaPath = req.file ? `/uploads/${req.file.filename}` : '';
-    const mediaType = req.file ? getMediaKind(req.file.mimetype) : '';
-
-    db.prepare(`
-      INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
-VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(category, title.trim(), content.trim(), mediaPath, mediaType);
-
-    return res.redirect('/category/' + category);
-  });
-});
-
-app.post('/admin/posts', requireAdmin, (req, res) => {
   upload.single('media')(req, res, async function(err) {
     const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
 
@@ -510,8 +473,6 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
   });
 });
 
-  return res.redirect('/admin');
-});
 
 app.use((err, req, res, next) => {
   console.error(err);

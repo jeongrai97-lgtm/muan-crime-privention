@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 
 const express = require('express');
 const session = require('express-session');
@@ -10,8 +10,7 @@ const Database = require('better-sqlite3');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
+const ADMIN_PASSWORD = 'muan0346@@';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');

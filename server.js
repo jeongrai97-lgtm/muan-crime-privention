@@ -18,6 +18,20 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret
 const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
 const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+function isCloudinaryConfigured() {
+  return !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+}
+
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
@@ -232,6 +246,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/category/:category', (req, res) => {
+  app.get('/admin/login', (req, res) => {
+  res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
+});
   const info = categoryInfo(req.params.category);
   if (!info) return res.status(404).send('존재하지 않는 카테고리입니다.');
 
@@ -362,18 +379,19 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       }
     }
 
-    db.prepare(`
-      UPDATE posts
-      SET category = ?, title = ?, content = ?, media_path = ?, media_type = ?
-      WHERE id = ?
-    `).run(
+   db.prepare(`
+  UPDATE posts
+  SET category = ?, title = ?, content = ?, media_path = ?, media_type = ?, author_id = ?, author_name = ?
+  WHERE id = ?
+`).run(
   category,
   title.trim(),
   content.trim(),
   mediaPath,
   mediaType,
   req.session.adminId || null,
-  req.session.adminName || '무안경찰서'
+  req.session.adminName || '무안경찰서',
+  req.params.id
 );
     return res.redirect('/category/' + category);
   });
@@ -428,19 +446,69 @@ VALUES (?, ?, ?, ?, ?, ?, ?)
   });
 });
 
-app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+app.post('/admin/posts', requireAdmin, (req, res) => {
+  upload.single('media')(req, res, async function(err) {
+    const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
 
-  if (post) {
-    if (post.media_path) {
-      const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
-      if (fs.existsSync(filePath)) {
-        try { fs.unlinkSync(filePath); } catch (e) {}
+    if (err) {
+      return res.status(400).render('admin', {
+        categories,
+        posts,
+        isAdmin: true,
+        error: err.message || '업로드 중 오류가 발생했습니다.',
+        success: ''
+      });
+    }
+
+    const { category, title, content } = req.body;
+
+    if (!category || !title || !content) {
+      return res.status(400).render('admin', {
+        categories,
+        posts,
+        isAdmin: true,
+        error: '카테고리, 제목, 내용을 모두 입력해주세요.',
+        success: ''
+      });
+    }
+
+    let mediaPath = '';
+    let mediaType = '';
+
+    if (req.file) {
+      mediaType = getMediaKind(req.file.mimetype);
+
+      try {
+        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
+        deleteFileSafe(req.file.path);
+      } catch (e) {
+        deleteFileSafe(req.file.path);
+        return res.status(400).render('admin', {
+          categories,
+          posts,
+          isAdmin: true,
+          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
+          success: ''
+        });
       }
     }
-    db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
-    return res.redirect('/category/' + post.category);
-  }
+
+    db.prepare(`
+      INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      category,
+      title.trim(),
+      content.trim(),
+      mediaPath,
+      mediaType,
+      req.session.adminId || null,
+      req.session.adminName || '무안경찰서'
+    );
+
+    return res.redirect('/category/' + category);
+  });
+});
 
   return res.redirect('/admin');
 });

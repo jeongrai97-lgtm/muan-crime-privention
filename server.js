@@ -59,7 +59,7 @@ db.exec(`
 `);
 
 
-// 기존 카테고리 데이터 구조를 새 구조에 맞게 1회 자동 정리
+// 기존 카테고리 구조를 최신 구조로 자동 정리
 db.exec(`
   UPDATE posts SET category = '__tmp_foreign__' WHERE category = 'foreign';
   UPDATE posts SET category = 'foreign' WHERE category = 'phishing';

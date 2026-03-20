@@ -14,7 +14,7 @@ const { v2: cloudinary } = require('cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
+const ADMIN_PASSWORD = 'muan0346';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
@@ -218,7 +218,7 @@ app.get('/admin/login', (req, res) => {
 });
 
 app.post('/admin/login', (req, res) => {
-  if (req.body.password === ADMIN_PASSWORD) {
+  if (req.body.password === 'muan0346') {
     req.session.isAdmin = true;
     return res.redirect('/admin');
   }

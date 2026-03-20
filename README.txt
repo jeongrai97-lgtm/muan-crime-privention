@@ -1,6 +1,6 @@
 [Cloudinary 연결 최종본]
-관리자 로그인 포함 버전입니다.
-관리자 비밀번호는 muan0346 입니다.
+메인관리자는 전체게시판 관리기능을 가지고 있습니다
+일반관리자는 글 작성, 수정기능을 가지고 있습니다.
 
 핵심
 - 사진/영상이 Render 서버에 저장되지 않고 Cloudinary에 저장됩니다.
@@ -33,5 +33,5 @@ Render 반영
    SESSION_SECRET
 4. Manual Deploy → Deploy latest commit
 
-관리자 비밀번호
-- muan0346
+관리자 비밀번호는 메인관리자에게 문의하세요 
+

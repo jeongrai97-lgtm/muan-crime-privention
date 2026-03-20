@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚓무안경찰서 범죄예방가이드🚓</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1565c0">
+</head>
+<body>
+  <%- include('partials_header', { isAdmin: isAdmin }) %>
+  <div class="container">
+    <div class="header-card">
+      <div style="display:flex;align-items:center;gap:15px;"><img src="/police_logo.png" style="width:80px;"><h1>무안경찰서 범죄예방가이드</h1></div>
+      <div class="subtitle">
+        사용자는 게시글을 보기만 할 수 있고, 관리자만 로그인 후 글 등록·삭제를 할 수 있습니다.<br>
+        사진과 1분 내외 영상을 업로드할 수 있는 고급형 디자인 버전입니다.
+      </div>
+    </div>
+
+    <div class="grid">
+      <% categories.forEach(c => { %>
+        <a class="category-card" href="/category/<%= c.key %>">
+          <span class="icon"><%= c.icon %></span>
+          <%= c.name %>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

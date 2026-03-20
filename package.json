@@ -1,0 +1,18 @@
+{
+  "name": "muan-crime-guide-video-pwa-app",
+  "version": "1.2.0",
+  "description": "무안경찰서 범죄예방가이드 - 관리자 등록 / 사용자 조회 / 사진·영상 업로드 / PWA 지원",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}

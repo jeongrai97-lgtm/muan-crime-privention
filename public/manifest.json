@@ -1,0 +1,20 @@
+{
+  "name": "무안경찰서 범죄예방가이드",
+  "short_name": "범죄예방가이드",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1565c0",
+  "theme_color": "#1565c0",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

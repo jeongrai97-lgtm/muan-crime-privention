@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= info.name %> - 무안경찰서 범죄예방가이드</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+  <%- include('partials_header', { isAdmin: isAdmin }) %>
+  <div class="container">
+    <div class="section-title"><%= info.icon %> <%= info.name %> 게시판</div>
+
+    <% if (!posts.length) { %>
+      <div class="empty-box">등록된 게시글이 없습니다.</div>
+    <% } else { %>
+      <div class="post-list">
+        <% posts.forEach(post => { %>
+          <div class="post-card">
+            <% if (post.media_path && post.media_type === 'image') { %>
+              <img class="post-media" src="<%= post.media_path %>" 
+                   onclick="showImage('<%= post.media_path %>')" 
+                   style="cursor:zoom-in;">
+            <% } %>
+            <% if (post.media_path && post.media_type === 'video') { %>
+              <video class="post-video" controls playsinline preload="metadata">
+                <source src="<%= post.media_path %>">
+              </video>
+            <% } %>
+            <div class="post-body">
+              <div class="post-title"><%= post.title %></div>
+              <div class="post-meta">등록일: <%= post.created_at %></div>
+              <div class="post-content"><%= post.content %></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+<div id="imgBox" onclick="hideImage()" 
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center;">
+  <img id="bigImg" style="max-width:90%; max-height:90%;">
+</div>
+
+<script>
+function showImage(src){
+  document.getElementById("bigImg").src = src;
+  document.getElementById("imgBox").style.display = "flex";
+}
+function hideImage(){
+  document.getElementById("imgBox").style.display = "none";
+}
+</script>
+</body>
+</html>

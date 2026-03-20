@@ -141,7 +141,7 @@ app.get('/admin/login', (req, res) => {
 });
 
 app.post('/admin/login', (req, res) => {
-  if (req.body.password === ADMIN_PASSWORD) {
+  if (req.body.password === 'muan0346') {
     req.session.isAdmin = true;
     return res.redirect('/admin');
   }

@@ -9,11 +9,12 @@ const multer = require('multer');
 const Database = require('better-sqlite3');
 const ffmpegPath = require('ffmpeg-static');
 const { spawn } = require('child_process');
+const { v2: cloudinary } = require('cloudinary');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
-const ADMIN_PASSWORD = 'muan0346';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
@@ -133,6 +134,38 @@ function transcodeVideoToMp4(inputPath) {
   });
 }
 
+
+async function uploadFileToCloudinary(localPath, mediaType) {
+  if (!isCloudinaryConfigured()) {
+    throw new Error('Cloudinary 환경변수가 설정되지 않았습니다.');
+  }
+
+  const options = {
+    folder: 'muan-crime-guide',
+    resource_type: mediaType === 'video' ? 'video' : 'image'
+  };
+
+  if (mediaType === 'video') {
+    options.format = 'mp4';
+    options.eager = [
+      {
+        format: 'mp4',
+        video_codec: 'h264',
+        audio_codec: 'aac'
+      }
+    ];
+    options.eager_async = false;
+  }
+
+  const result = await cloudinary.uploader.upload(localPath, options);
+
+  if (mediaType === 'video' && result.eager && result.eager.length > 0 && result.eager[0].secure_url) {
+    return result.eager[0].secure_url;
+  }
+
+  return result.secure_url;
+}
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -185,7 +218,7 @@ app.get('/admin/login', (req, res) => {
 });
 
 app.post('/admin/login', (req, res) => {
-  if (req.body.password === 'muan0346') {
+  if (req.body.password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
     return res.redirect('/admin');
   }
@@ -252,20 +285,17 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       mediaPath = `/uploads/${req.file.filename}`;
       mediaType = getMediaKind(req.file.mimetype);
 
-      if (mediaType === 'video') {
-        try {
-          const convertedPath = await transcodeVideoToMp4(req.file.path);
-          deleteFileSafe(req.file.path);
-          mediaPath = `/uploads/${path.basename(convertedPath)}`;
-        } catch (e) {
-          deleteFileSafe(req.file.path);
-          return res.status(400).render('edit', {
-            post,
-            categories,
-            isAdmin: true,
-            error: e.message || '영상 자동 변환 중 오류가 발생했습니다.'
-          });
-        }
+      try {
+        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
+        deleteFileSafe(req.file.path);
+      } catch (e) {
+        deleteFileSafe(req.file.path);
+        return res.status(400).render('edit', {
+          post,
+          categories,
+          isAdmin: true,
+          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.'
+        });
       }
     }
 

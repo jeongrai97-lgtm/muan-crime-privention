@@ -1,34 +1,37 @@
-[바로 실행용 최종본]
+[Cloudinary 연결 최종본]
 관리자 로그인 포함 버전입니다.
 관리자 비밀번호는 muan0346 입니다.
 
-실행 방법
-1. 압축 풀기
-2. 해당 폴더에서 cmd 열기
-3. 아래 순서대로 입력
+핵심
+- 사진/영상이 Render 서버에 저장되지 않고 Cloudinary에 저장됩니다.
+- Render 무료 플랜에서도 업로드 파일이 사라지지 않습니다.
+- 영상은 Cloudinary 업로드 시 아이폰 호환 MP4로 변환되도록 설정했습니다.
 
-npm install
-npm start
+로컬 실행
+1. 압축 풀기
+2. Cloudinary 계정 생성
+3. .env 파일에 아래 3개 값 입력
+   CLOUDINARY_CLOUD_NAME
+   CLOUDINARY_API_KEY
+   CLOUDINARY_API_SECRET
+4. 폴더에서 cmd 열기
+5. 아래 실행
+   npm install
+   npm start
 
 접속 주소
 - 메인: http://localhost:3000
-- 관리자 로그인: http://localhost:3000/admin/login
+- 관리자: http://localhost:3000/admin/login
 
-카테고리
-- 절도예방수칙
-- 사기예방수칙
-- 외국인 범죄예방수칙
-- 무안경찰알림
+Render 반영
+1. GitHub에 압축 푼 파일 전부 덮어쓰기 업로드
+2. package.json도 반드시 같이 반영
+3. Render Environment에 아래 변수 추가
+   CLOUDINARY_CLOUD_NAME
+   CLOUDINARY_API_KEY
+   CLOUDINARY_API_SECRET
+   SESSION_SECRET
+4. Manual Deploy → Deploy latest commit
 
-참고
-- 이 압축파일에는 .env 파일이 이미 들어있습니다.
-- Render 배포 후 관리자 로그인 주소는 /admin/login 입니다.
-
-
-[11] 아이폰 호환 영상 자동 변환
-- 업로드된 영상은 자동으로 아이폰 호환 MP4(H.264/AAC)로 변환됩니다.
-- 변환 때문에 업로드 시 몇 초 더 걸릴 수 있습니다.
-- Render/GitHub에 다시 올릴 때 package.json도 함께 반영해야 합니다.
-
-[12] 세로 영상 비율 최적화
-- 아이폰/모바일에서 세로 영상이 더 자연스럽게 보이도록 최대 높이와 비율 표시를 최적화했습니다.
+관리자 비밀번호
+- muan0346

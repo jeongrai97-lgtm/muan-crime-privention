@@ -10,7 +10,8 @@ const Database = require('better-sqlite3');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = 'muan0346@@';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
+const ADMIN_PASSWORD = 'muan0346';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');

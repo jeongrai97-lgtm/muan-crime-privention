@@ -426,6 +426,30 @@ if (!isSuperAdmin && !isAuthor) {
   });
 });
 
+app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+
+  if (!post) return res.redirect('/admin');
+
+  const isSuperAdmin = req.session.adminRole === 'superadmin';
+  const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
+
+  if (!isSuperAdmin && !isAuthor) {
+    return res.status(403).send('본인이 작성한 게시글만 삭제할 수 있습니다.');
+  }
+
+  if (post.media_path && !String(post.media_path).includes('res.cloudinary.com')) {
+    const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (e) {}
+    }
+  }
+
+  db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+
+  return res.redirect('/category/' + post.category);
+});  
+  
 app.get('/admin', requireAdmin, (req, res) => {
   const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
   const admins = db.prepare(`

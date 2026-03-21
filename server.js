@@ -230,7 +230,7 @@ app.get('/manifest.json', (req, res) => {
 });
 
 
-  consapp.get('/sw.js', (req, res) => {
+  app.get('/sw.js', (req, res) => {
   res.set('Content-Type', 'application/javascript');
   res.sendFile(path.join(publicDir, 'sw.js'));
 });

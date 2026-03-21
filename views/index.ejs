@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🚓무안경찰서 범죄예방가이드🚓</title>
+<% if (isAdmin && adminName) { %>
+  <div class="admin-welcome">
+    관리자 로그인: <strong><%= adminName %></strong>
+  </div>
+<% } %>
   <link rel="stylesheet" href="/style.css">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1565c0">

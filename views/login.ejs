@@ -1,36 +1,30 @@
-app.get('/admin/login', (req, res) => {
-  res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
-});
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 로그인</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <%- include('partials_header', { isAdmin: isAdmin }) %>
 
-app.post('/admin/login', (req, res) => {
-  const { username, password } = req.body;
+  <div class="login-wrap">
+    <div class="white-card">
+      <h2>관리자 로그인</h2>
 
-  const admin = db.prepare(`
-    SELECT * FROM admins
-    WHERE username = ? AND is_active = 1
-  `).get(username);
+      <form method="POST" action="/admin/login" class="form-grid">
+        <input type="text" name="username" placeholder="아이디 입력" required>
+        <input type="password" name="password" placeholder="비밀번호 입력" required>
+        <button class="btn-primary" type="submit">로그인</button>
+      </form>
 
-  if (!admin) {
-    return res.render('login', {
-      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
-      isAdmin: false
-    });
-  }
-
-  const ok = bcrypt.compareSync(password, admin.password_hash);
-
-  if (!ok) {
-    return res.render('login', {
-      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
-      isAdmin: false
-    });
-  }
-
-  req.session.isAdmin = true;
-  req.session.adminId = admin.id;
-  req.session.adminRole = admin.role;
-  req.session.adminName = admin.display_name;
-  req.session.adminUsername = admin.username;
-
-  return res.redirect('/admin');
-});
+      <% if (error) { %>
+        <div class="notice-error" style="margin-top:12px;">
+          <%= error %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

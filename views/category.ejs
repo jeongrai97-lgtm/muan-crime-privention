@@ -47,6 +47,18 @@
     <a href="/admin/posts/<%= post.id %>/edit" class="btn-primary">수정</a>
   </div>
 <% } %>
+
+<% if (
+  isAdmin &&
+  (
+    adminRole === 'superadmin' ||
+    Number(post.author_id) === Number(adminId)
+  )
+) { %>
+  <div style="margin-top:10px;">
+    <a href="/admin/posts/<%= post.id %>/edit" class="btn-primary">수정</a>
+  </div>
+<% } %>
             </div>
           </div>
         <% }) %>

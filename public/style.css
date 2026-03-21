@@ -266,10 +266,53 @@ textarea{
   background:linear-gradient(180deg,#ef5b54,var(--danger));
   color:#fff;
 }
+
 .btn-primary:hover,.btn-danger:hover{
   transform:translateY(-1px);
   opacity:.96;
 }
+
+.post-actions {
+  margin-top: 10px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.post-actions form {
+  margin: 0 !important;
+  display: inline-flex !important;
+}
+
+.post-action-btn {
+  width: 64px !important;
+  height: 34px !important;
+  min-width: 64px !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+
+.edit-btn {
+  background: #1565c0 !important;
+  color: #fff !important;
+}
+
+.delete-btn {
+  background: #e53935 !important;
+  color: #fff !important;
+}
+
 .notice-success{
   color:#1d7d35;
   font-weight:800;

@@ -79,6 +79,8 @@ db.exec(`
   );
 `);
 
+const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
+
 const superadminExists = db.prepare(
   `SELECT * FROM admins WHERE username = ?`
 ).get('superadmin');
@@ -100,8 +102,6 @@ try {
 
 // 슈퍼관리자 계정 강제 재생성
 db.prepare(`DELETE FROM admins WHERE username = ?`).run('superadmin');
-
-const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
 
 db.prepare(`
   INSERT INTO admins (username, password_hash, display_name, role, is_active)

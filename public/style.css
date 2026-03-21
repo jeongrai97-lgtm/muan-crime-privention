@@ -599,3 +599,23 @@ body {
     font-size: 13px;
   }
 }
+
+@media (min-width: 768px) {
+  .home-shell {
+    max-width: 900px;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .category-card {
+    min-height: 240px;
+  }
+
+  .hero-section {
+    max-width: 600px;
+    margin: 30px auto 0;
+  }
+}

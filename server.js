@@ -15,6 +15,8 @@ const { v2: cloudinary } = require('cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
+const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
+const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
 
 const publicDir = path.join(__dirname, 'public');

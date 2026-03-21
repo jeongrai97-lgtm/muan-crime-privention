@@ -1,4 +1,4 @@
-const CACHE_NAME = 'muan-crime-guide-v1';
+const CACHE_NAME = 'muan-crime-guide-v2';
 const URLS_TO_CACHE = ['/', '/style.css', '/manifest.json'];
 
 self.addEventListener('install', event => {

@@ -79,8 +79,6 @@ db.exec(`
   );
 `);
 
-const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
-
 const superadminExists = db.prepare(
   `SELECT * FROM admins WHERE username = ?`
 ).get('superadmin');

@@ -370,13 +370,75 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
 
 app.get('/admin', requireAdmin, (req, res) => {
   const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
+  const admins = db.prepare(`
+    SELECT id, username, display_name, role, is_active, created_at
+    FROM admins
+    ORDER BY id ASC
+  `).all();
+
   res.render('admin', {
     categories,
     posts,
+    admins,
     isAdmin: true,
+    isSuperAdmin: req.session.adminRole === 'superadmin',
+    adminName: req.session.adminName || '',
     error: '',
     success: ''
   });
+});
+
+app.post('/admin/users', requireSuperAdmin, (req, res) => {
+  const { username, display_name } = req.body;
+
+  if (!username || !display_name) {
+   const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
+const admins = db.prepare(`
+  SELECT id, username, display_name, role, is_active, created_at
+  FROM admins
+  ORDER BY id ASC
+`).all();
+
+return res.status(400).render('admin', {
+  categories,
+  posts,
+  admins,
+  isAdmin: true,
+  isSuperAdmin: req.session.adminRole === 'superadmin',
+  adminName: req.session.adminName || '',
+  error: '...',
+  success: ''
+});
+
+  const exists = db.prepare(`
+    SELECT * FROM admins
+    WHERE username = ?
+  `).get(username.trim());
+
+  if (exists) {
+    const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      isAdmin: true,
+      error: '이미 존재하는 관리자 아이디입니다.',
+      success: ''
+    });
+  }
+
+  const hash = bcrypt.hashSync(DEFAULT_EDITOR_PASSWORD, 10);
+
+  db.prepare(`
+    INSERT INTO admins (username, password_hash, display_name, role, is_active)
+    VALUES (?, ?, ?, ?, 1)
+  `).run(
+    username.trim(),
+    hash,
+    display_name.trim(),
+    'editor'
+  );
+
+  return res.redirect('/admin');
 });
 
 app.post('/admin/posts', requireAdmin, (req, res) => {

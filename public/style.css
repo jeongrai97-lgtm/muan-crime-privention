@@ -174,41 +174,41 @@ img,video{max-width:100%}
   white-space:pre-line;
   font-size:15px;
 }
+
 .post-actions {
   margin-top: 10px;
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  align-items: center;
 }
 
 .post-actions form {
   margin: 0;
 }
 
-/* 버튼 공통 */
-.btn-primary,
-.btn-danger {
-  width: 80px;
-  height: 40px;
+.post-actions .btn-primary,
+.post-actions .btn-danger {
+  width: 64px;
+  height: 34px;
+  padding: 0;
   border-radius: 10px;
-  font-weight: 700;
   font-size: 14px;
-  display: flex;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
   border: none;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
-/* 수정 버튼 */
-.btn-primary {
+.post-actions .btn-primary {
   background: #1565c0;
   color: #fff;
 }
 
-/* 삭제 버튼 */
-.btn-danger {
+.post-actions .btn-danger {
   background: #e53935;
   color: #fff;
 }

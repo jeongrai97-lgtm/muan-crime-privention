@@ -236,7 +236,11 @@ app.get('/manifest.json', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.render('index', { categories, isAdmin: !!req.session.isAdmin });
+  res.render('index', {
+    categories,
+    isAdmin: !!req.session.isAdmin,
+    adminName: req.session.adminName || ''
+  });
 });
 
 app.get('/category/:category', (req, res) => {

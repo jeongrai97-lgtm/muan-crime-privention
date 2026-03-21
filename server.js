@@ -50,9 +50,12 @@ const upload = multer({
 });
 
 const db = new Database(path.join(__dirname, 'crime_guide.db'));
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    author_id INTEGER,
+    author_name TEXT,
     category TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -61,6 +64,26 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now', 'localtime'))
   );
 `);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN author_name TEXT;`);
+} catch (e) {}
 
 // 슈퍼관리자 계정 강제 재생성
 db.prepare(`DELETE FROM admins WHERE username = ?`).run('superadmin');

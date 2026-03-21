@@ -1142,9 +1142,9 @@ body {
   }
 
   .section-title {
-    margin: 22px 4px 18px;
+    margin: 22px 0 18px;
     font-size: 22px;
-    line-height: 1.35;
+    font-weight: 900;
     color: #1565c0;
   }
 

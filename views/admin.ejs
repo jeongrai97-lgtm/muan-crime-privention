@@ -5,63 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>관리자 페이지</title>
   <link rel="stylesheet" href="/style.css">
-</head>
-<body>
-  <%- include('partials_header', { isAdmin: isAdmin }) %>
-
-  <div class="container">
-    <div class="white-card" style="margin-bottom:20px;">
-      <h2 style="margin-top:0; color:#1565c0;">게시글 등록</h2>
-
-      <% if (error) { %>
-        <div class="notice-error" style="margin-bottom:12px;"><%= error %></div>
-      <% } %>
-      <% if (success) { %>
-        <div class="notice-success" style="margin-bottom:12px;"><%= success %></div>
-      <% } %>
-
-      <form method="POST" action="/admin/posts" enctype="multipart/form-data" class="form-grid">
-        <select name="category" required>
-          <option value="">카테고리 선택</option>
-          <% categories.forEach(c => { %>
-            <option value="<%= c.key %>"><%= c.name %></option>
-          <% }) %>
-        </select>
-
-        <input type="text" name="title" placeholder="제목 입력" required>
-        <textarea name="content" placeholder="내용 입력" required></textarea>
-
-        <input type="file" name="media" accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime">
-        <div class="file-help">
-          사진 또는 영상 파일 직접 업로드 가능<br>
-          권장: 1분 이내 영상 / 최대 200MB (업로드 후 Cloudinary에 저장되며, 영상은 아이폰 호환 MP4로 변환)
-        </div>
-
-        <button type="submit" class="btn-primary">게시글 등록</button>
-      </form>
-    </div>
-
-    <div class="white-card">
-      <h2 style="margin-top:0; color:#1565c0;">등록된 게시글</h2>
-      <% if (!posts.length) { %>
-        <div>등록된 게시글이 없습니다.</div>
-      <% } %>
-
-      <% posts.forEach(post => { %>
-        <div class="admin-post-row">
-          <div>
-            <div class="admin-post-title">[<%= categories.find(c => c.key === post.category)?.name || post.category %>] <%= post.title %></div>
-            <div class="post-meta"><%= post.created_at %> <% if (post.media_type) { %> / <%= post.media_type %><% } %></div>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <a class="btn-primary" style="display:inline-block; text-align:center;" href="/admin/posts/<%= post.id %>/edit">수정</a>
-            <form method="POST" action="/admin/posts/<%= post.id %>/delete" onsubmit="return confirm('삭제하시겠습니까?')">
-              <button class="btn-danger" type="submit">삭제</button>
-            </form>
-          </div>
-        </div>
-      <% }) %>
-    </div>
 
 <% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin) { %>
   <div class="white-card" style="margin-top:20px;">

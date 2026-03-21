@@ -176,131 +176,37 @@ img,video{max-width:100%}
 }
 
 .post-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.post-actions form {
-  margin: 0;
-}
-
-.post-actions .btn-primary,
-.post-actions .btn-danger {
-  width: 64px;
-  height: 34px;
-  padding: 0;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.post-actions .btn-primary {
-  background: #1565c0;
-  color: #fff;
-}
-
-.post-actions .btn-danger {
-  background: #e53935;
-  color: #fff;
-}
-
-.empty-box{
-  background:rgba(255,255,255,0.14);
-  color:#fff;
-  border:2px dashed rgba(255,255,255,0.4);
-  padding:28px;
-  border-radius:20px;
-  text-align:center;
-  font-weight:700;
-}
-
-.form-grid{
-  display:grid;
-  gap:13px;
-}
-input, textarea, select{
-  width:100%;
-  padding:13px 15px;
-  border-radius:14px;
-  border:1px solid #d8e0ee;
-  font-size:15px;
-  color:var(--text);
-  background:#fff;
-}
-input:focus, textarea:focus, select:focus{
-  outline:none;
-  border-color:#7eaaf2;
-  box-shadow:0 0 0 4px rgba(21,101,192,0.12);
-}
-textarea{
-  min-height:180px;
-  resize:vertical;
-}
-.file-help{
-  font-size:13px;
-  color:var(--muted);
-  line-height:1.6;
-}
-.btn-primary,.btn-danger{
-  border:none;
-  border-radius:14px;
-  padding:13px 18px;
-  font-weight:800;
-  cursor:pointer;
-  transition:transform .18s ease, opacity .18s ease;
-}
-.btn-primary{
-  background:linear-gradient(180deg,var(--primary),var(--primary-dark));
-  color:#fff;
-}
-.btn-danger{
-  background:linear-gradient(180deg,#ef5b54,var(--danger));
-  color:#fff;
-}
-
-.btn-primary:hover,.btn-danger:hover{
-  transform:translateY(-1px);
-  opacity:.96;
-}
-
-.post-actions {
-  margin-top: 10px;
+  margin-top: 12px !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   gap: 8px !important;
 }
 
-.post-actions form {
+.post-action-form {
   margin: 0 !important;
+  padding: 0 !important;
   display: inline-flex !important;
 }
 
 .post-action-btn {
-  width: 64px !important;
-  height: 34px !important;
-  min-width: 64px !important;
+  width: 72px !important;
+  height: 36px !important;
+  min-width: 72px !important;
   padding: 0 !important;
+  margin: 0 !important;
   border: none !important;
   border-radius: 10px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  box-sizing: border-box !important;
   font-size: 14px !important;
   font-weight: 700 !important;
+  line-height: 1 !important;
   text-decoration: none !important;
   cursor: pointer !important;
-  box-sizing: border-box !important;
-  line-height: 1 !important;
+  vertical-align: middle !important;
 }
 
 .edit-btn {

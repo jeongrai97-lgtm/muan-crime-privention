@@ -68,9 +68,9 @@
     <h3 style="margin-top:0; color:#1565c0;">관리자 계정 추가</h3>
     <form method="POST" action="/admin/users" class="form-grid">
       <input type="text" name="username" placeholder="관리자 아이디 입력" required>
-      <input type="text" name="display_name" placeholder="닉네임 입력 (예: 외사담당)" required>
+      <input type="text" name="display_name" placeholder="닉네임 입력 (예: 범죄예방)" required>
       <div class="file-help">
-        기본 비밀번호는 <strong>andkstj1!</strong> 입니다.
+        기본 비밀번호는 <strong>무안서1!</strong> 입니다.
       </div>
       <button type="submit" class="btn-primary">관리자 추가</button>
     </form>
@@ -79,6 +79,16 @@
   </div>
 </body>
 </html>
+
+<div class="white-card" style="margin-top:20px;">
+  <h3 style="margin-top:0; color:#1565c0;">비밀번호 변경</h3>
+  <form method="POST" action="/admin/password" class="form-grid">
+    <input type="password" name="current_password" placeholder="현재 비밀번호 입력" required>
+    <input type="password" name="new_password" placeholder="새 비밀번호 입력" required>
+    <input type="password" name="confirm_password" placeholder="새 비밀번호 확인" required>
+    <button type="submit" class="btn-primary">비밀번호 변경</button>
+  </form>
+</div>
 
 <% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin && typeof admins !== 'undefined') { %>
   <div class="white-card" style="margin-top:20px;">

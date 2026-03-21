@@ -478,6 +478,11 @@ body {
   backdrop-filter: blur(3px);
 }
 
+.topbar {
+  margin-bottom: 24px;
+  padding-bottom: 10px;
+}
+
 .category-grid {
   margin-top: 32px;
   display: grid;

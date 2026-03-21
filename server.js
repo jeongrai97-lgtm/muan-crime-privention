@@ -137,10 +137,20 @@ function requireAdmin(req, res, next) {
 }
 
 function requireSuperAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin && req.session.adminRole === 'superadmin') {
-    return next();
+  if (!req.session || !req.session.isAdmin || !req.session.adminId) {
+    return res.status(403).send('권한이 없습니다.');
   }
-  return res.status(403).send('권한이 없습니다.');
+
+  const admin = db.prepare(`
+    SELECT * FROM admins
+    WHERE id = ? AND is_active = 1
+  `).get(req.session.adminId);
+
+  if (!admin || admin.role !== 'superadmin') {
+    return res.status(403).send('권한이 없습니다.');
+  }
+
+  return next();
 }
 
 function getMediaKind(mimetype) {

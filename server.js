@@ -336,6 +336,13 @@ app.get('/admin/posts/:id/edit', requireAdmin, (req, res) => {
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.redirect('/admin');
 
+  const isSuperAdmin = req.session.adminRole === 'superadmin';
+  const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
+
+  if (!isSuperAdmin && !isAuthor) {
+    return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
+  }
+  
   res.render('edit', {
     post,
     categories,

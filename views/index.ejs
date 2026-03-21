@@ -3,41 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚓무안경찰서 범죄예방가이드🚓</title>
-<% if (isAdmin && adminName) { %>
-  <div class="admin-welcome">
-    관리자 로그인: <strong><%= adminName %></strong>
-  </div>
-<% } %>
-  <link rel="stylesheet" href="/style.css">
+  <title>무안경찰서 범죄예방가이드</title>
+  <link rel="stylesheet" href="/style.css?v=10">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#1565c0">
 </head>
 <body>
   <%- include('partials_header', { isAdmin: isAdmin }) %>
-  <div class="container">
-    <div class="header-card">
-      <div style="display:flex;align-items:center;gap:15px;"><img src="/police_logo.png" style="width:80px;"><h1>무안경찰서 범죄예방가이드</h1></div>
-      <div class="subtitle">
-        사용자는 게시글을 보기만 할 수 있고, 관리자만 로그인 후 글 등록·삭제를 할 수 있습니다.<br>
-        사진과 1분 내외 영상을 업로드할 수 있는 고급형 디자인 버전입니다.
-      </div>
-    </div>
 
-    <div class="grid">
-      <% categories.forEach(c => { %>
-        <a class="category-card" href="/category/<%= c.key %>">
-          <span class="icon"><%= c.icon %></span>
-          <%= c.name %>
+  <div class="home-shell">
+    <section class="hero-section">
+      <div class="hero-top">
+        <div class="hero-badge">
+          <img src="/police_logo.png" alt="경찰 로고" class="hero-logo">
+        </div>
+
+        <div class="hero-title-wrap">
+          <div class="hero-sub">MUAN POLICE</div>
+          <h1 class="hero-title">무안경찰서<br>범죄예방 가이드</h1>
+        </div>
+      </div>
+
+      <div class="hero-line"></div>
+
+      <p class="hero-desc">
+        주민 안전을 위한 범죄예방 정보를 제공합니다.
+      </p>
+
+      <% if (isAdmin && adminName) { %>
+        <div class="hero-admin">
+          관리자 로그인: <strong><%= adminName %></strong>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="category-grid">
+      <% categories.forEach(category => { %>
+        <a href="/category/<%= category.key %>" class="category-card card-<%= category.key %>">
+          <div class="category-icon-wrap">
+            <span class="category-icon"><%= category.icon %></span>
+          </div>
+
+          <div class="category-title"><%= category.name %></div>
+
+          <div class="category-desc">
+            <% if (category.key === 'theft') { %>
+              절도 예방 수칙 안내
+            <% } else if (category.key === 'fraud') { %>
+              피싱, 사기 수법 안내
+            <% } else if (category.key === 'foreign') { %>
+              외국인 대상 범죄예방수칙 안내
+            <% } else if (category.key === 'notice') { %>
+              공지사항 및 소식
+            <% } else { %>
+              무안경찰 알림
+            <% } %>
+          </div>
         </a>
       <% }) %>
-    </div>
+    </section>
   </div>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-  </script>
 </body>
 </html>

@@ -59,6 +59,23 @@
     <a href="/admin/posts/<%= post.id %>/edit" class="btn-primary">수정</a>
   </div>
 <% } %>
+
+<% if (
+  isAdmin &&
+  (
+    adminRole === 'superadmin' ||
+    Number(post.author_id) === Number(adminId)
+  )
+) { %>
+  <div style="margin-top:10px; display:flex; gap:8px;">
+    <a href="/admin/posts/<%= post.id %>/edit" class="btn-primary">수정</a>
+
+    <form method="POST" action="/admin/posts/<%= post.id %>/delete"
+          onsubmit="return confirm('정말 삭제하시겠습니까?');">
+      <button type="submit" class="btn-danger">삭제</button>
+    </form>
+  </div>
+<% } %>
             </div>
           </div>
         <% }) %>

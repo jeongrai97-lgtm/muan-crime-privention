@@ -62,12 +62,15 @@ db.exec(`
   );
 `);
 
+// 슈퍼관리자 계정 강제 재생성
+db.prepare(`DELETE FROM admins WHERE username = ?`).run('superadmin');
+
 const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
 
 db.prepare(`
-  INSERT OR REPLACE INTO admins (id, username, password_hash, display_name, role, is_active)
-  VALUES (1, 'superadmin', ?, '범죄예방대응과', 'superadmin', 1)
-`).run(superadminHash);
+  INSERT INTO admins (username, password_hash, display_name, role, is_active)
+  VALUES (?, ?, ?, ?, 1)
+`).run('superadmin', superadminHash, '범죄예방대응과', 'superadmin');
 
 // 기존 카테고리 구조를 최신 구조로 자동 정리
 db.exec(`
@@ -75,7 +78,6 @@ db.exec(`
   UPDATE posts SET category = 'foreign' WHERE category = 'phishing';
   UPDATE posts SET category = 'notice' WHERE category = '__tmp_foreign__';
 `);
-
 
 const categories = [
   { key: 'theft', name: '절도예방수칙', icon: '🚨' },

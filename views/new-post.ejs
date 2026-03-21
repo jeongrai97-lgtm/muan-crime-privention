@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>게시글 등록 - 무안경찰서 범죄예방가이드</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <%- include('partials_header', { isAdmin: isAdmin }) %>
+
+  <div class="container">
+    <div class="white-card">
+      <h2 style="margin-top:0; color:#1565c0;">게시글 등록</h2>
+
+      <% if (adminName) { %>
+        <div class="admin-welcome" style="margin-bottom:14px;">
+          관리자: <strong><%= adminName %></strong>
+        </div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="notice-error" style="margin-bottom:12px;"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/posts" enctype="multipart/form-data" class="form-grid">
+        <select name="category" required>
+          <option value="">카테고리 선택</option>
+          <% categories.forEach(c => { %>
+            <option value="<%= c.key %>"><%= c.name %></option>
+          <% }) %>
+        </select>
+
+        <input type="text" name="title" placeholder="제목 입력" required>
+        <textarea name="content" placeholder="내용 입력" required></textarea>
+
+        <input type="file" name="media" accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime">
+        <div class="file-help">
+          이미지 또는 영상 업로드 가능
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="submit" class="btn-primary">등록</button>
+          <a href="/admin" class="btn-danger" style="display:inline-flex; align-items:center; justify-content:center;">취소</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

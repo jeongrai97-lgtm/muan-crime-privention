@@ -399,25 +399,27 @@ app.get('/admin', requireAdmin, (req, res) => {
 app.post('/admin/users', requireSuperAdmin, (req, res) => {
   const { username, display_name } = req.body;
 
-  if (!username || !display_name) {
-   const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
-const admins = db.prepare(`
-  SELECT id, username, display_name, role, is_active, created_at
-  FROM admins
-  ORDER BY id ASC
-`).all();
+  const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
+  const admins = db.prepare(`
+    SELECT id, username, display_name, role, is_active, created_at
+    FROM admins
+    ORDER BY id ASC
+  `).all();
 
-return res.status(400).render('admin', {
-  categories,
-  posts,
-  admins,
-  isAdmin: true,
-  isSuperAdmin: req.session.adminRole === 'superadmin',
-  adminName: req.session.adminName || '',
-  error: '...',
-  success: ''
-});
-t exists = db.prepare(`
+ if (!username || !display_name) {
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      admins,
+      isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
+      error: '아이디와 닉네임을 모두 입력해주세요.',
+      success: ''
+    });
+  }
+    
+  const exists = db.prepare(`
     SELECT * FROM admins
     WHERE username = ?
   `).get(username.trim());

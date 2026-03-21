@@ -17,6 +17,19 @@ const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
 const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
 const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+function isCloudinaryConfigured() {
+  return !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+}
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
 
 const publicDir = path.join(__dirname, 'public');
@@ -429,11 +442,12 @@ app.post('/admin/users', requireSuperAdmin, (req, res) => {
   `).get(username.trim());
 
   if (exists) {
-    const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
     return res.status(400).render('admin', {
       categories,
       posts,
       isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
       error: '이미 존재하는 관리자 아이디입니다.',
       success: ''
     });
@@ -455,14 +469,22 @@ app.post('/admin/users', requireSuperAdmin, (req, res) => {
 });
 
 app.post('/admin/posts', requireAdmin, (req, res) => {
-  upload.single('media')(req, res, function(err) {
+  upload.single('media')(req, res, async function(err) {
     const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
+    const admins = db.prepare(`
+      SELECT id, username, display_name, role, is_active, created_at
+      FROM admins
+      ORDER BY id ASC
+    `).all();
 
     if (err) {
       return res.status(400).render('admin', {
         categories,
         posts,
+        admins,
         isAdmin: true,
+        isSuperAdmin: req.session.adminRole === 'superadmin',
+        adminName: req.session.adminName || '',
         error: err.message || '업로드 중 오류가 발생했습니다.',
         success: ''
       });
@@ -474,39 +496,54 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       return res.status(400).render('admin', {
         categories,
         posts,
+        admins,
         isAdmin: true,
+        isSuperAdmin: req.session.adminRole === 'superadmin',
+        adminName: req.session.adminName || '',
         error: '카테고리, 제목, 내용을 모두 입력해주세요.',
         success: ''
       });
     }
 
-    const mediaPath = req.file ? `/uploads/${req.file.filename}` : '';
-    const mediaType = req.file ? getMediaKind(req.file.mimetype) : '';
+    let mediaPath = '';
+    let mediaType = '';
+
+    if (req.file) {
+      mediaType = getMediaKind(req.file.mimetype);
+
+      try {
+        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
+        deleteFileSafe(req.file.path);
+      } catch (e) {
+        deleteFileSafe(req.file.path);
+        return res.status(400).render('admin', {
+          categories,
+          posts,
+          admins,
+          isAdmin: true,
+          isSuperAdmin: req.session.adminRole === 'superadmin',
+          adminName: req.session.adminName || '',
+          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
+          success: ''
+        });
+      }
+    }
 
     db.prepare(`
-      INSERT INTO posts (category, title, content, media_path, media_type)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(category, title.trim(), content.trim(), mediaPath, mediaType);
+      INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      category,
+      title.trim(),
+      content.trim(),
+      mediaPath,
+      mediaType,
+      req.session.adminId || null,
+      req.session.adminName || '무안경찰서'
+    );
 
     return res.redirect('/category/' + category);
   });
-});
-
-app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
-
-  if (post) {
-    if (post.media_path) {
-      const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
-      if (fs.existsSync(filePath)) {
-        try { fs.unlinkSync(filePath); } catch (e) {}
-      }
-    }
-    db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
-    return res.redirect('/category/' + post.category);
-  }
-
-  return res.redirect('/admin');
 });
 
 app.use((err, req, res, next) => {

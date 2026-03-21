@@ -8,10 +8,10 @@ const fs = require('fs');
 const helmet = require('helmet');
 const multer = require('multer');
 const Database = require('better-sqlite3');
+const bcrypt = require('bcryptjs');
 const ffmpegPath = require('ffmpeg-static');
 const { spawn } = require('child_process');
 const { v2: cloudinary } = require('cloudinary');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';

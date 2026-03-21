@@ -92,22 +92,6 @@ if (!superadminExists) {
   `).run('superadmin', superadminHash, '범죄예방대응과', 'superadmin');
 }
 
-try {
-  db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
-} catch (e) {}
-
-try {
-  db.exec(`ALTER TABLE posts ADD COLUMN author_name TEXT;`);
-} catch (e) {}
-
-// 슈퍼관리자 계정 강제 재생성
-db.prepare(`DELETE FROM admins WHERE username = ?`).run('superadmin');
-
-db.prepare(`
-  INSERT INTO admins (username, password_hash, display_name, role, is_active)
-  VALUES (?, ?, ?, ?, 1)
-`).run('superadmin', superadminHash, '범죄예방대응과', 'superadmin');
-
 // 기존 카테고리 구조를 최신 구조로 자동 정리
 db.exec(`
   UPDATE posts SET category = '__tmp_foreign__' WHERE category = 'foreign';

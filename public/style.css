@@ -175,9 +175,9 @@ img,video{max-width:100%}
   font-size:15px;
 }
 .post-actions {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-end;
 }
 

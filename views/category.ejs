@@ -32,7 +32,7 @@
               <div class="post-title"><%= post.title %></div>
               <div class="post-meta">등록일: <%= post.created_at %></div>
               <div class="post-content"><%= post.content %></div>
-<% if (p.author_name) { %>
+<% if (post.author_name) { %>
   <div class="post-author">작성자: <%= p.author_name %></div>
 <% } %>
             </div>

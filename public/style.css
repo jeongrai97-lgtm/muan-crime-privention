@@ -358,7 +358,7 @@ img,video{max-width:100%}
 /* ===== 홈화면 프리미엄 리디자인 ===== */
 
 body {
-  background: linear-gradient(180deg, #0f57c8 0%, #2a6fe0 20%, #eef3fb 20%, #eef3fb 100%);
+  background: #eef3fb;
 }
 
 .home-shell {
@@ -370,7 +370,7 @@ body {
 .hero-section {
   position: relative;
   overflow: hidden;
-  margin-top: 20px;
+  margin : 16px auto 24px;
   padding: 24px 20px 28px;
   border-radius: 0 0 28px 28px;
   background: linear-gradient(135deg, #0d4eb8 0%, #1565c0 55%, #0b3d91 100%);
@@ -580,6 +580,44 @@ body {
   background: linear-gradient(135deg, #2e86ff 0%, #1565c0 55%, #0d47a1 100%);
 }
 
+.topbar {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+}
+
+.topbar .title {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1565c0;
+}
+
+.topbar .nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.topbar .nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1565c0;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
 /* 모바일 대응 */
 @media (max-width: 430px) {
   .hero-title {
@@ -602,20 +640,23 @@ body {
 
 @media (min-width: 768px) {
   .home-shell {
-    max-width: 900px;
+    max-width: 1100px;
+    padding: 0 24px 40px;
   }
 
+  .hero-section {
+    max-width: 640px;
+    margin: 20px auto 32px;
+    
   .category-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
+    margin-top: 0;
   }
 
   .category-card {
     min-height: 240px;
-  }
+   }
+ }
 
-  .hero-section {
-    max-width: 600px;
-    margin: 30px auto 0;
-  }
-}
+

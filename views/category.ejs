@@ -35,6 +35,18 @@
 <% if (post.author_name) { %>
   <div class="post-author">작성자: <%= post.author_name %></div>
 <% } %>
+
+<% if (
+  isAdmin &&
+  (
+    adminRole === 'superadmin' ||
+    Number(post.author_id) === Number(adminId)
+  )
+) { %>
+  <div style="margin-top:10px;">
+    <a href="/admin/posts/<%= post.id %>/edit" class="btn-primary">수정</a>
+  </div>
+<% } %>
             </div>
           </div>
         <% }) %>

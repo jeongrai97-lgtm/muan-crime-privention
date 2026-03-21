@@ -33,26 +33,27 @@
   <div class="post-meta">등록일: <%= post.created_at %></div>
   <div class="post-content"><%= post.content %></div>
 
-  <% if (post.author_name) { %>
-    <div class="post-author">작성자: <%= post.author_name %></div>
-  <% } %>
+<% if (post.author_name) { %>
+  <div class="post-author">작성자: <%= post.author_name %></div>
+<% } %>
 
-  <% if (
-    isAdmin &&
-    (
-      adminRole === 'superadmin' ||
-      Number(post.author_id) === Number(adminId)
-    )
-  ) { %>
-    <div class="post-actions">
-      <a href="/admin/posts/<%= post.id %>/edit" class="btn-primary">수정</a>
+<% if (
+  isAdmin &&
+  (
+    adminRole === 'superadmin' ||
+    Number(post.author_id) === Number(adminId)
+  )
+) { %>
+  <div class="post-actions">
+    <a href="/admin/posts/<%= post.id %>/edit" class="post-action-btn edit-btn">수정</a>
 
-      <form method="POST" action="/admin/posts/<%= post.id %>/delete"
-            onsubmit="return confirm('정말 삭제하시겠습니까?');">
-        <button type="submit" class="post-action-btn delete-btn">삭제</button>
-      </form>
-    </div>
-  <% } %>
+    <form method="POST" action="/admin/posts/<%= post.id %>/delete"
+          class="post-action-form"
+          onsubmit="return confirm('정말 삭제하시겠습니까?');">
+      <button type="submit" class="post-action-btn delete-btn">삭제</button>
+    </form>
+  </div>
+<% } %>
 </div>
 
             </div>

@@ -1,6 +1,6 @@
 [Cloudinary 연결 최종본]
-관리자 로그인 포함 버전입니다.
-관리자 비밀번호는 muan0346 입니다.
+메인관리자는 전체 게시판 관리, 수정, 삭제 기능이 있으며
+일반관리자는 게시글의 수정 삭제 기능이 있습니다.
 
 핵심
 - 사진/영상이 Render 서버에 저장되지 않고 Cloudinary에 저장됩니다.
@@ -33,9 +33,7 @@ Render 반영
    SESSION_SECRET
 4. Manual Deploy → Deploy latest commit
 
-관리자 비밀번호
-- muan0346
-
+관리자 비밀번호는 메인 관리자가 관리하고 있으며 권한 부여 및 분실 시 무안경찰서 범죄예방대응과 메인관리자에게 문의하시기 바랍니다 
 
 [13] SQLite 세션 저장 적용
 - express-session 기본 MemoryStore 대신 SQLite 세션 저장소를 사용합니다.

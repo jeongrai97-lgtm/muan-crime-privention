@@ -80,6 +80,14 @@ db.exec(`
   );
 `);
 
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN author_name TEXT;`);
+} catch (e) {}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS admins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

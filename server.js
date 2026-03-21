@@ -525,7 +525,6 @@ app.post('/admin/password', requireAdmin, (req, res) => {
 
 app.post('/admin/users', requireSuperAdmin, (req, res) => {
   const { username, display_name } = req.body;
-
   const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
   const admins = db.prepare(`
     SELECT id, username, display_name, role, is_active, created_at
@@ -574,6 +573,69 @@ app.post('/admin/users', requireSuperAdmin, (req, res) => {
     display_name.trim(),
     'editor'
   );
+
+  return res.redirect('/admin');
+});
+
+app.post('/admin/users/:id/update', requireSuperAdmin, (req, res) => {
+  const { display_name } = req.body;
+  const id = req.params.id;
+
+  if (!display_name || !display_name.trim()) {
+    return res.redirect('/admin');
+  }
+
+  db.prepare(`
+    UPDATE admins
+    SET display_name = ?
+    WHERE id = ? AND role != 'superadmin'
+  `).run(display_name.trim(), id);
+
+  return res.redirect('/admin');
+});
+
+app.post('/admin/users/:id/password-reset', requireSuperAdmin, (req, res) => {
+  const id = req.params.id;
+
+  const target = db.prepare(`
+    SELECT * FROM admins
+    WHERE id = ?
+  `).get(id);
+
+  if (!target || target.role === 'superadmin') {
+    return res.redirect('/admin');
+  }
+
+  const hash = bcrypt.hashSync(DEFAULT_EDITOR_PASSWORD, 10);
+
+  db.prepare(`
+    UPDATE admins
+    SET password_hash = ?
+    WHERE id = ?
+  `).run(hash, id);
+
+  return res.redirect('/admin');
+});
+
+app.post('/admin/users/:id/toggle-active', requireSuperAdmin, (req, res) => {
+  const id = req.params.id;
+
+  const target = db.prepare(`
+    SELECT * FROM admins
+    WHERE id = ?
+  `).get(id);
+
+  if (!target || target.role === 'superadmin') {
+    return res.redirect('/admin');
+  }
+
+  const nextValue = target.is_active ? 0 : 1;
+
+  db.prepare(`
+    UPDATE admins
+    SET is_active = ?
+    WHERE id = ?
+  `).run(nextValue, id);
 
   return res.redirect('/admin');
 });

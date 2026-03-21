@@ -137,6 +137,13 @@ function requireAdmin(req, res, next) {
 }
 
 function requireSuperAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin && req.session.adminRole === 'superadmin') {
+    return next();
+  }
+  return res.status(403).send('권한이 없습니다.');
+}
+
+function requireSuperAdmin(req, res, next) {
   if (!req.session || !req.session.isAdmin || !req.session.adminId) {
     return res.status(403).send('권한이 없습니다.');
   }
@@ -248,7 +255,6 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure: false,
@@ -290,7 +296,8 @@ app.get('/category/:category', (req, res) => {
   isAdmin: !!req.session.isAdmin,
   adminId: req.session.adminId || null,
   adminRole: req.session.adminRole || ''
-});
+  });
+});  
 
 app.get('/admin/login', (req, res) => {
   res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
@@ -574,6 +581,7 @@ app.post('/admin/password', requireAdmin, (req, res) => {
 
 app.post('/admin/users', requireSuperAdmin, (req, res) => {
   const { username, display_name } = req.body;
+
   const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
   const admins = db.prepare(`
     SELECT id, username, display_name, role, is_active, created_at
@@ -581,7 +589,7 @@ app.post('/admin/users', requireSuperAdmin, (req, res) => {
     ORDER BY id ASC
   `).all();
 
- if (!username || !display_name) {
+  if (!username || !display_name) {
     return res.status(400).render('admin', {
       categories,
       posts,
@@ -593,7 +601,7 @@ app.post('/admin/users', requireSuperAdmin, (req, res) => {
       success: ''
     });
   }
-    
+
   const exists = db.prepare(`
     SELECT * FROM admins
     WHERE username = ?
@@ -603,6 +611,7 @@ app.post('/admin/users', requireSuperAdmin, (req, res) => {
     return res.status(400).render('admin', {
       categories,
       posts,
+      admins,
       isAdmin: true,
       isSuperAdmin: req.session.adminRole === 'superadmin',
       adminName: req.session.adminName || '',
@@ -731,23 +740,7 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
 
     if (req.file) {
       mediaType = getMediaKind(req.file.mimetype);
-
-      try {
-        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
-        deleteFileSafe(req.file.path);
-      } catch (e) {
-        deleteFileSafe(req.file.path);
-        return res.status(400).render('admin', {
-          categories,
-          posts,
-          admins,
-          isAdmin: true,
-          isSuperAdmin: req.session.adminRole === 'superadmin',
-          adminName: req.session.adminName || '',
-          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
-          success: ''
-        });
-      }
+      mediaPath = `/uploads/${req.file.filename}`;
     }
 
     db.prepare(`
@@ -765,6 +758,30 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
 
     return res.redirect('/category/' + category);
   });
+});
+
+app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+
+  if (!post) return res.redirect('/admin');
+
+  const isSuperAdmin = req.session.adminRole === 'superadmin';
+  const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
+
+  if (!isSuperAdmin && !isAuthor) {
+    return res.status(403).send('본인이 작성한 게시글만 삭제할 수 있습니다.');
+  }
+
+  if (post.media_path && !String(post.media_path).includes('res.cloudinary.com')) {
+    const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (e) {}
+    }
+  }
+
+  db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+
+  return res.redirect('/category/' + post.category);
 });
 
 app.use((err, req, res, next) => {

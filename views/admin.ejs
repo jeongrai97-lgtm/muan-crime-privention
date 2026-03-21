@@ -3,78 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<div class="container"> <div class="white-card" style="margin-bottom:20px;">
-<title>관리자 페이지</title>
+  <title>관리자 페이지</title>
   <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <%- include('partials_header', { isAdmin: isAdmin }) %>
 
-<% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin) { %>
-  <div class="white-card" style="margin-top:20px;">
-    <h3 style="margin-top:0; color:#1565c0;">관리자 계정 추가</h3>
-    <form method="POST" action="/admin/users" class="form-grid">
-      <input type="text" name="username" placeholder="관리자 아이디 입력" required>
-      <input type="text" name="display_name" placeholder="닉네임 입력 (예: 범죄예방)" required>
-      <div class="file-help">
-        기본 비밀번호는 <strong>무안서1!</strong> 입니다.
+  <div class="container">
+    <% if (error) { %>
+      <div class="notice-error" style="margin-bottom:12px;"><%= error %></div>
+    <% } %>
+
+    <% if (success) { %>
+      <div class="notice-success" style="margin-bottom:12px;"><%= success %></div>
+    <% } %>
+
+    <div class="white-card" style="margin-bottom:20px;">
+      <h2 style="margin-top:0; color:#1565c0;">관리자 페이지</h2>
+
+      <% if (adminName) { %>
+        <div class="admin-welcome" style="margin-top:10px;">
+          관리자: <strong><%= adminName %></strong>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="white-card" style="margin-top:20px;">
+      <h3 style="margin-top:0; color:#1565c0;">비밀번호 변경</h3>
+      <form method="POST" action="/admin/password" class="form-grid">
+        <input type="password" name="current_password" placeholder="현재 비밀번호 입력" required>
+        <input type="password" name="new_password" placeholder="새 비밀번호 입력" required>
+        <input type="password" name="confirm_password" placeholder="새 비밀번호 확인" required>
+        <button type="submit" class="btn-primary">비밀번호 변경</button>
+      </form>
+    </div>
+
+    <% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin) { %>
+      <div class="white-card" style="margin-top:20px;">
+        <h3 style="margin-top:0; color:#1565c0;">관리자 계정 추가</h3>
+        <form method="POST" action="/admin/users" class="form-grid">
+          <input type="text" name="username" placeholder="관리자 아이디 입력" required>
+          <input type="text" name="display_name" placeholder="닉네임 입력 (예: 범죄예방)" required>
+          <div class="file-help">
+            기본 비밀번호는 <strong>andkstj1!</strong> 입니다.
+          </div>
+          <button type="submit" class="btn-primary">관리자 추가</button>
+        </form>
       </div>
-      <button type="submit" class="btn-primary">관리자 추가</button>
-    </form>
-  </div>
-<% } %>
+    <% } %>
+
+    <% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin && typeof admins !== 'undefined') { %>
+      <div class="white-card" style="margin-top:20px;">
+        <h3 style="margin-top:0; color:#1565c0;">관리자 목록</h3>
+
+        <% admins.forEach(a => { %>
+          <div class="admin-post-row">
+            <div>
+              <div class="admin-post-title"><%= a.display_name %></div>
+              <div class="post-meta">
+                아이디: <%= a.username %> /
+                권한: <%= a.role %> /
+                상태: <%= a.is_active ? '활성' : '비활성' %>
+              </div>
+            </div>
+
+            <% if (a.role !== 'superadmin') { %>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+
+                <form method="POST" action="/admin/users/<%= a.id %>/update" style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <input type="text" name="display_name" value="<%= a.display_name %>" style="width:140px;">
+                  <button type="submit" class="btn-primary">닉네임 수정</button>
+                </form>
+
+                <form method="POST" action="/admin/users/<%= a.id %>/password-reset"
+                      onsubmit="return confirm('비밀번호를 초기화하시겠습니까?');">
+                  <button type="submit" class="btn-danger">비밀번호 초기화</button>
+                </form>
+
+                <form method="POST" action="/admin/users/<%= a.id %>/toggle-active"
+                      onsubmit="return confirm('계정 상태를 변경하시겠습니까?');">
+                  <button type="submit" class="btn-primary">
+                    <%= a.is_active ? '비활성화' : '재활성화' %>
+                  </button>
+                </form>
+
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
   </div>
 </body>
 </html>
-
-<div class="white-card" style="margin-top:20px;">
-  <h3 style="margin-top:0; color:#1565c0;">비밀번호 변경</h3>
-  <form method="POST" action="/admin/password" class="form-grid">
-    <input type="password" name="current_password" placeholder="현재 비밀번호 입력" required>
-    <input type="password" name="new_password" placeholder="새 비밀번호 입력" required>
-    <input type="password" name="confirm_password" placeholder="새 비밀번호 확인" required>
-    <button type="submit" class="btn-primary">비밀번호 변경</button>
-  </form>
-</div>
-
-<% if (typeof isSuperAdmin !== 'undefined' && isSuperAdmin && typeof admins !== 'undefined') { %>
-  <div class="white-card" style="margin-top:20px;">
-    <h3 style="margin-top:0; color:#1565c0;">관리자 목록</h3>
-
-    <% admins.forEach(a => { %>
-      <div class="admin-post-row">
-        <div>
-          <div class="admin-post-title"><%= a.display_name %></div>
-          <div class="post-meta">
-            아이디: <%= a.username %> /
-            권한: <%= a.role %> /
-            상태: <%= a.is_active ? '활성' : '비활성' %>
-          </div>
-        </div>
-
-   <% if (a.role !== 'superadmin') { %>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-
-            <!-- 닉네임 수정 -->
-            <form method="POST" action="/admin/users/<%= a.id %>/update" style="display:flex; gap:6px;">
-              <input type="text" name="display_name" value="<%= a.display_name %>" style="width:140px;">
-              <button type="submit" class="btn-primary">수정</button>
-            </form>
-
-            <!-- 비밀번호 초기화 -->
-            <form method="POST" action="/admin/users/<%= a.id %>/password-reset"
-                  onsubmit="return confirm('비밀번호를 초기화하시겠습니까?');">
-              <button type="submit" class="btn-danger">초기화</button>
-            </form>
-
-            <!-- 비활성화 -->
-            <form method="POST" action="/admin/users/<%= a.id %>/toggle-active"
-                  onsubmit="return confirm('계정 상태를 변경하시겠습니까?');">
-              <button type="submit" class="btn-primary">
-                <%= a.is_active ? '비활성화' : '재활성화' %>
-              </button>
-            </form>
-
-          </div>
-        <% } %>
-      </div>
-    <% }) %>
-  </div>
-<% } %>

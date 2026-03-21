@@ -79,6 +79,19 @@ db.exec(`
   );
 `);
 
+const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
+
+const superadminExists = db.prepare(
+  `SELECT * FROM admins WHERE username = ?`
+).get('superadmin');
+
+if (!superadminExists) {
+  db.prepare(`
+    INSERT INTO admins (username, password_hash, display_name, role, is_active)
+    VALUES (?, ?, ?, ?, 1)
+  `).run('superadmin', superadminHash, '범죄예방대응과', 'superadmin');
+}
+
 try {
   db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
 } catch (e) {}
@@ -258,17 +271,41 @@ app.get('/admin/login', (req, res) => {
 });
 
 app.post('/admin/login', (req, res) => {
-  if (req.body.password === ADMIN_PASSWORD) {
-    req.session.isAdmin = true;
-    return res.redirect('/admin');
+  const { username, password } = req.body;
+
+  const admin = db.prepare(`
+    SELECT * FROM admins
+    WHERE username = ? AND is_active = 1
+  `).get(username);
+
+  if (!admin) {
+    return res.render('login', {
+      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
+      isAdmin: false
+    });
   }
-  return res.render('login', { error: '비밀번호가 올바르지 않습니다.', isAdmin: false });
+
+  const ok = bcrypt.compareSync(password, admin.password_hash);
+
+  if (!ok) {
+    return res.render('login', {
+      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
+      isAdmin: false
+    });
+  }
+
+  req.session.isAdmin = true;
+  req.session.adminId = admin.id;
+  req.session.adminRole = admin.role;
+  req.session.adminName = admin.display_name;
+  req.session.adminUsername = admin.username;
+
+  return res.redirect('/admin');
 });
 
 app.get('/admin/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
-
 
 app.get('/admin/posts/:id/edit', requireAdmin, (req, res) => {
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);

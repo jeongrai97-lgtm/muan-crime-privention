@@ -421,6 +421,108 @@ app.get('/admin', requireAdmin, (req, res) => {
   });
 });
 
+app.post('/admin/password', requireAdmin, (req, res) => {
+  const { current_password, new_password, confirm_password } = req.body;
+
+  const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
+  const admins = db.prepare(`
+    SELECT id, username, display_name, role, is_active, created_at
+    FROM admins
+    ORDER BY id ASC
+  `).all();
+
+  if (!current_password || !new_password || !confirm_password) {
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      admins,
+      isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
+      error: '현재 비밀번호, 새 비밀번호, 새 비밀번호 확인을 모두 입력해주세요.',
+      success: ''
+    });
+  }
+
+  if (new_password !== confirm_password) {
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      admins,
+      isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
+      error: '새 비밀번호와 비밀번호 확인이 일치하지 않습니다.',
+      success: ''
+    });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      admins,
+      isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
+      error: '새 비밀번호는 6자 이상으로 입력해주세요.',
+      success: ''
+    });
+  }
+
+  const admin = db.prepare(`
+    SELECT * FROM admins
+    WHERE id = ? AND is_active = 1
+  `).get(req.session.adminId);
+
+  if (!admin) {
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      admins,
+      isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
+      error: '관리자 정보를 찾을 수 없습니다.',
+      success: ''
+    });
+  }
+
+  const ok = bcrypt.compareSync(current_password, admin.password_hash);
+
+  if (!ok) {
+    return res.status(400).render('admin', {
+      categories,
+      posts,
+      admins,
+      isAdmin: true,
+      isSuperAdmin: req.session.adminRole === 'superadmin',
+      adminName: req.session.adminName || '',
+      error: '현재 비밀번호가 올바르지 않습니다.',
+      success: ''
+    });
+  }
+
+  const newHash = bcrypt.hashSync(new_password, 10);
+
+  db.prepare(`
+    UPDATE admins
+    SET password_hash = ?
+    WHERE id = ?
+  `).run(newHash, admin.id);
+
+  return res.render('admin', {
+    categories,
+    posts,
+    admins,
+    isAdmin: true,
+    isSuperAdmin: req.session.adminRole === 'superadmin',
+    adminName: req.session.adminName || '',
+    error: '',
+    success: '비밀번호가 성공적으로 변경되었습니다.'
+  });
+});
+
 app.post('/admin/users', requireSuperAdmin, (req, res) => {
   const { username, display_name } = req.body;
 

@@ -62,6 +62,12 @@ db.exec(`
   );
 `);
 
+const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
+
+db.prepare(`
+  INSERT OR REPLACE INTO admins (id, username, password_hash, display_name, role, is_active)
+  VALUES (1, 'superadmin', ?, '범죄예방대응과', 'superadmin', 1)
+`).run(superadminHash);
 
 // 기존 카테고리 구조를 최신 구조로 자동 정리
 db.exec(`

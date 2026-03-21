@@ -239,6 +239,21 @@ textarea{
   color:var(--danger);
   font-weight:800;
 }
+.admin-welcome {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.9);
+  color: #1565c0;
+  font-weight: 700;
+  border-radius: 12px;
+  display: inline-block;
+}
+.post-author {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #5f6b7a;
+  font-weight: 600;
+}
 .admin-post-row{
   display:grid;
   grid-template-columns:1fr auto;

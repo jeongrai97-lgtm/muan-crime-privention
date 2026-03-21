@@ -1,6 +1,6 @@
 [Cloudinary 연결 최종본]
-메인관리자는 전체게시판 관리기능을 가지고 있습니다
-일반관리자는 글 작성, 수정기능을 가지고 있습니다.
+관리자 로그인 포함 버전입니다.
+관리자 비밀번호는 muan0346 입니다.
 
 핵심
 - 사진/영상이 Render 서버에 저장되지 않고 Cloudinary에 저장됩니다.
@@ -33,5 +33,16 @@ Render 반영
    SESSION_SECRET
 4. Manual Deploy → Deploy latest commit
 
-관리자 비밀번호는 메인관리자에게 문의하세요 
+관리자 비밀번호
+- muan0346
 
+
+[13] SQLite 세션 저장 적용
+- express-session 기본 MemoryStore 대신 SQLite 세션 저장소를 사용합니다.
+- 로그인 유지 안정성을 높이고 MemoryStore 경고를 줄였습니다.
+- sessions.db 파일에 로그인 세션이 저장됩니다.
+
+반영 방법
+1. GitHub에 압축 푼 파일 전부 덮어쓰기 업로드
+2. package.json도 반드시 같이 반영
+3. Render에서 Manual Deploy → Deploy latest commit

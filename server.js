@@ -2,12 +2,12 @@ require('dotenv').config();
 
 const express = require('express');
 const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
 const multer = require('multer');
 const Database = require('better-sqlite3');
-const bcrypt = require('bcryptjs');
 const ffmpegPath = require('ffmpeg-static');
 const { spawn } = require('child_process');
 const { v2: cloudinary } = require('cloudinary');
@@ -15,22 +15,7 @@ const { v2: cloudinary } = require('cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
-const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
-const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-function isCloudinaryConfigured() {
-  return !!(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET
-  );
-}
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
@@ -68,8 +53,6 @@ const db = new Database(path.join(__dirname, 'crime_guide.db'));
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    author_id INTEGER,
-    author_name TEXT,
     category TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -79,37 +62,6 @@ db.exec(`
   );
 `);
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    role TEXT NOT NULL,
-    is_active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT (datetime('now', 'localtime'))
-  );
-`);
-
-try {
-  db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
-} catch (e) {}
-
-try {
-  db.exec(`ALTER TABLE posts ADD COLUMN author_name TEXT;`);
-} catch (e) {}
-
-const superadminExists = db.prepare(
-  `SELECT * FROM admins WHERE username = ?`
-).get('superadmin');
-
-if (!superadminExists) {
-  const hash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
-  db.prepare(`
-    INSERT INTO admins (username, password_hash, display_name, role)
-    VALUES (?, ?, ?, ?)
-  `).run('superadmin', hash, '범죄예방대응과', 'superadmin');
-}
 
 // 기존 카테고리 구조를 최신 구조로 자동 정리
 db.exec(`
@@ -222,8 +174,14 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(publicDir));
 app.use(session({
+  store: new SQLiteStore({
+    db: 'sessions.db',
+    dir: __dirname,
+    table: 'sessions'
+  }),
   secret: SESSION_SECRET,
   resave: false,
+  saveUninitialized: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
@@ -267,44 +225,12 @@ app.get('/admin/login', (req, res) => {
 });
 
 app.post('/admin/login', (req, res) => {
-  const { username, password } = req.body;
-
-  const admin = db.prepare(`
-    SELECT * FROM admins
-    WHERE username = ? AND is_active = 1
-  `).get(username);
-
-  if (!admin) {
-    return res.render('login', {
-      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
-      isAdmin: false
-    });
+  if (req.body.password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    return res.redirect('/admin');
   }
-
-  const ok = bcrypt.compareSync(password, admin.password_hash);
-
-  if (!ok) {
-    return res.render('login', {
-      error: '아이디 또는 비밀번호가 올바르지 않습니다.',
-      isAdmin: false
-    });
-  }
-
-  req.session.isAdmin = true;
-  req.session.adminId = admin.id;
-  req.session.adminRole = admin.role;
-  req.session.adminName = admin.display_name;
-  req.session.adminUsername = admin.username;
-
-  return res.redirect('/admin');
+  return res.render('login', { error: '비밀번호가 올바르지 않습니다.', isAdmin: false });
 });
-
-function requireSuperAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin && req.session.adminRole === 'superadmin') {
-    return next();
-  }
-  return res.status(403).send('권한이 없습니다.');
-}
 
 app.get('/admin/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
@@ -380,20 +306,12 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       }
     }
 
-   db.prepare(`
-  UPDATE posts
-  SET category = ?, title = ?, content = ?, media_path = ?, media_type = ?, author_id = ?, author_name = ?
-  WHERE id = ?
-`).run(
-  category,
-  title.trim(),
-  content.trim(),
-  mediaPath,
-  mediaType,
-  req.session.adminId || null,
-  req.session.adminName || '무안경찰서',
-  req.params.id
-);
+    db.prepare(`
+      UPDATE posts
+      SET category = ?, title = ?, content = ?, media_path = ?, media_type = ?
+      WHERE id = ?
+    `).run(category, title.trim(), content.trim(), mediaPath, mediaType, req.params.id);
+
     return res.redirect('/category/' + category);
   });
 });
@@ -410,7 +328,7 @@ app.get('/admin', requireAdmin, (req, res) => {
 });
 
 app.post('/admin/posts', requireAdmin, (req, res) => {
-  upload.single('media')(req, res, async function(err) {
+  upload.single('media')(req, res, function(err) {
     const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
 
     if (err) {
@@ -435,44 +353,34 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       });
     }
 
-    let mediaPath = '';
-    let mediaType = '';
-
-    if (req.file) {
-      mediaType = getMediaKind(req.file.mimetype);
-
-      try {
-        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
-        deleteFileSafe(req.file.path);
-      } catch (e) {
-        deleteFileSafe(req.file.path);
-        return res.status(400).render('admin', {
-          categories,
-          posts,
-          isAdmin: true,
-          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
-          success: ''
-        });
-      }
-    }
+    const mediaPath = req.file ? `/uploads/${req.file.filename}` : '';
+    const mediaType = req.file ? getMediaKind(req.file.mimetype) : '';
 
     db.prepare(`
-      INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      category,
-      title.trim(),
-      content.trim(),
-      mediaPath,
-      mediaType,
-      req.session.adminId || null,
-      req.session.adminName || '무안경찰서'
-    );
+      INSERT INTO posts (category, title, content, media_path, media_type)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(category, title.trim(), content.trim(), mediaPath, mediaType);
 
     return res.redirect('/category/' + category);
   });
 });
 
+app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+
+  if (post) {
+    if (post.media_path) {
+      const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (e) {}
+      }
+    }
+    db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+    return res.redirect('/category/' + post.category);
+  }
+
+  return res.redirect('/admin');
+});
 
 app.use((err, req, res, next) => {
   console.error(err);

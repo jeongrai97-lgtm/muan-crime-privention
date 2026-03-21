@@ -284,11 +284,12 @@ app.get('/category/:category', (req, res) => {
     ORDER BY id DESC
   `).all(req.params.category);
 
-  res.render('category', {
-    info,
-    posts,
-    isAdmin: !!req.session.isAdmin
-  });
+ res.render('category', {
+  info,
+  posts,
+  isAdmin: !!req.session.isAdmin,
+  adminId: req.session.adminId || null,
+  adminRole: req.session.adminRole || ''
 });
 
 app.get('/admin/login', (req, res) => {

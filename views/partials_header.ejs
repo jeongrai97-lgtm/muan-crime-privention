@@ -3,6 +3,7 @@
   <div class="nav">
     <a href="/">메인</a>
     <% if (isAdmin) { %>
+      <a href="/admin/posts/new" class="btn-primary">게시글 등록</a>
       <a href="/admin">관리자</a>
       <a href="/admin/logout">로그아웃</a>
     <% } else { %>

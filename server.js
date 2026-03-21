@@ -477,6 +477,16 @@ app.get('/admin', requireAdmin, (req, res) => {
   });
 });
 
+app.get('/admin/posts/new', requireAdmin, (req, res) => {
+  res.render('new-post', {
+    categories,
+    isAdmin: true,
+    error: '',
+    adminName: req.session.adminName || '',
+    isSuperAdmin: req.session.adminRole === 'superadmin'
+  });
+});
+
 app.post('/admin/password', requireAdmin, (req, res) => {
   const { current_password, new_password, confirm_password } = req.body;
 

@@ -104,6 +104,32 @@
             상태: <%= a.is_active ? '활성' : '비활성' %>
           </div>
         </div>
+
+   <% if (a.role !== 'superadmin') { %>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+            <!-- 닉네임 수정 -->
+            <form method="POST" action="/admin/users/<%= a.id %>/update" style="display:flex; gap:6px;">
+              <input type="text" name="display_name" value="<%= a.display_name %>" style="width:140px;">
+              <button type="submit" class="btn-primary">수정</button>
+            </form>
+
+            <!-- 비밀번호 초기화 -->
+            <form method="POST" action="/admin/users/<%= a.id %>/password-reset"
+                  onsubmit="return confirm('비밀번호를 초기화하시겠습니까?');">
+              <button type="submit" class="btn-danger">초기화</button>
+            </form>
+
+            <!-- 비활성화 -->
+            <form method="POST" action="/admin/users/<%= a.id %>/toggle-active"
+                  onsubmit="return confirm('계정 상태를 변경하시겠습니까?');">
+              <button type="submit" class="btn-primary">
+                <%= a.is_active ? '비활성화' : '재활성화' %>
+              </button>
+            </form>
+
+          </div>
+        <% } %>
       </div>
     <% }) %>
   </div>

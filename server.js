@@ -115,6 +115,13 @@ function requireAdmin(req, res, next) {
   return res.redirect('/admin/login');
 }
 
+function requireSuperAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin && req.session.adminRole === 'superadmin') {
+    return next();
+  }
+  return res.status(403).send('권한이 없습니다.');
+}
+
 function getMediaKind(mimetype) {
   if (IMAGE_TYPES.includes(mimetype)) return 'image';
   if (VIDEO_TYPES.includes(mimetype)) return 'video';
@@ -222,7 +229,8 @@ app.get('/manifest.json', (req, res) => {
   res.sendFile(path.join(publicDir, 'manifest.json'));
 });
 
-app.get('/sw.js', (req, res) => {
+
+  consapp.get('/sw.js', (req, res) => {
   res.set('Content-Type', 'application/javascript');
   res.sendFile(path.join(publicDir, 'sw.js'));
 });
@@ -409,8 +417,7 @@ return res.status(400).render('admin', {
   error: '...',
   success: ''
 });
-
-  const exists = db.prepare(`
+t exists = db.prepare(`
     SELECT * FROM admins
     WHERE username = ?
   `).get(username.trim());

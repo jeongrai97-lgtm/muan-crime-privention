@@ -710,6 +710,23 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     if (req.file) {
       mediaType = getMediaKind(req.file.mimetype);
       mediaPath = `/uploads/${req.file.filename}`;
+
+      try {
+        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
+        deleteFileSafe(req.file.path);
+      } catch (e) {
+        deleteFileSafe(req.file.path);
+        return res.status(400).render('admin', {
+          categories,
+          posts,
+          admins,
+          isAdmin: true,
+          isSuperAdmin: req.session.adminRole === 'superadmin',
+          adminName: req.session.adminName || '',
+          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
+          success: ''
+        });
+      }
     }
 
     await pool.query(

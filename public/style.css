@@ -1348,6 +1348,22 @@ body {
   display: none !important;
 }
 
+#answerButtons {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+#answerButtons button {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: #eef4ff;
+  font-weight: 700;
+  cursor: pointer;
+}
 /* 상단 메뉴 오른쪽 정렬 유지 */
 .topbar {
   justify-content: flex-end !important;

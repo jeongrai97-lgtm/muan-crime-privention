@@ -1392,3 +1392,13 @@ body {
     margin-top: 8px !important;
   }
 }
+
+/* 상단 제목 제거 */
+.topbar .title {
+  display: none !important;
+}
+
+/* 상단 메뉴 오른쪽 정렬 유지 */
+.topbar {
+  justify-content: flex-end !important;
+}

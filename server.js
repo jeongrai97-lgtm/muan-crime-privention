@@ -391,6 +391,8 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       'SELECT * FROM posts WHERE id = $1',
       [req.params.id]
     );
+  });
+});
 
     const post = result.rows[0];
     if (!post) return res.redirect('/admin');

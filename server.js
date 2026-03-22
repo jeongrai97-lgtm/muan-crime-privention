@@ -12,8 +12,25 @@ const bcrypt = require('bcryptjs');
 const ffmpegPath = require('ffmpeg-static');
 const { spawn } = require('child_process');
 const { v2: cloudinary } = require('cloudinary');
+const express = require('express');
+const path = require('path');
+
 const app = express();
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/practice112', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', '112_practice.html'));
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
 const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
 const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';

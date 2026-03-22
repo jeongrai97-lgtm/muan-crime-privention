@@ -929,26 +929,35 @@
       const steps = getCurrentSteps();
       const step = steps[currentStep];
 
-      document.getElementById("callStatus").innerText = `112 연결됨 · ${currentStep + 1}/${steps.length}`;
-      document.getElementById("questionTitle").innerText = step.title;
-      document.getElementById("questionText").innerText = step.question;
-      document.getElementById("hintText").innerText = step.hint;
+      function renderStep() {
+  const steps = getCurrentSteps();
+  const step = steps[currentStep];
 
-      const answerBox = document.getElementById("answerButtons");
-      const feedbackBox = document.getElementById("feedbackBox");
+  document.getElementById("callStatus").innerText = `112 연결됨 · ${currentStep + 1}/${steps.length}`;
+  document.getElementById("questionTitle").innerText = step.title;
+  document.getElementById("questionText").innerText = step.question;
+  document.getElementById("hintText").innerText = step.hint;
 
-      feedbackBox.style.display = "none";
-      feedbackBox.className = "feedback-box";
-      feedbackBox.innerHTML = "";
-      answerBox.innerHTML = "";
+  const answerBox = document.getElementById("answerButtons");
+  const feedbackBox = document.getElementById("feedbackBox");
 
-      step.answers.forEach((answer) => {
-        const btn = document.createElement("button");
-        btn.className = "answer-btn";
-        btn.innerText = answer.text;
-        btn.onclick = () => selectAnswer(answer.good);
-        answerBox.appendChild(btn);
-      });
+  feedbackBox.style.display = "none";
+  feedbackBox.className = "feedback-box";
+  feedbackBox.innerHTML = "";
+  answerBox.innerHTML = "";
+
+  step.answers.forEach((answer) => {
+    const btn = document.createElement("button");
+    btn.className = "answer-btn";
+    btn.innerText = answer.text;
+    btn.onclick = () => selectAnswer(answer.good);
+    answerBox.appendChild(btn);
+  });
+
+  currentAudio = step.audio;
+  audioPlayer.pause();
+  audioPlayer.currentTime = 0;
+}
 
       playAudio(step.audio);
     }

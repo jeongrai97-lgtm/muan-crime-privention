@@ -391,8 +391,6 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       'SELECT * FROM posts WHERE id = $1',
       [req.params.id]
     );
-  });
-});
 
     const post = result.rows[0];
     if (!post) return res.redirect('/admin');
@@ -403,7 +401,7 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
     if (!isSuperAdmin && !isAuthor) {
       return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
     }
-    
+
     if (err) {
       return res.status(400).render('edit', {
         post,
@@ -427,15 +425,15 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
     let mediaType = post.media_type || '';
 
     if (delete_media === '1' && mediaPath) {
-      const oldPath = path.join(publicDir, mediaPath.replace(/^\//, ''));
+      const oldPath = path.join(publicDir, String(mediaPath).replace(/^\//, ''));
       deleteFileSafe(oldPath);
       mediaPath = '';
       mediaType = '';
     }
 
     if (req.file) {
-      if (mediaPath) {
-        const oldPath = path.join(publicDir, mediaPath.replace(/^\//, ''));
+      if (mediaPath && !String(mediaPath).includes('res.cloudinary.com')) {
+        const oldPath = path.join(publicDir, String(mediaPath).replace(/^\//, ''));
         deleteFileSafe(oldPath);
       }
 
@@ -456,21 +454,23 @@ app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
       }
     }
 
-await pool.query(
-  `UPDATE posts
-   SET category = $1, title = $2, content = $3, media_path = $4, media_type = $5
-   WHERE id = $6`,
-  [
-    category,
-    title.trim(),
-    content.trim(),
-    mediaPath,
-    mediaType,
-    req.params.id
-  ]
-);
+    await pool.query(
+      `UPDATE posts
+       SET category = $1, title = $2, content = $3, media_path = $4, media_type = $5
+       WHERE id = $6`,
+      [
+        category,
+        title.trim(),
+        content.trim(),
+        mediaPath,
+        mediaType,
+        req.params.id
+      ]
+    );
 
-return res.redirect('/category/' + category);
+    return res.redirect('/category/' + category);
+  });
+});
 
 app.post('/admin/posts/:id/delete', requireAdmin, async (req, res) => {
   const result = await pool.query(

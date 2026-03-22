@@ -18,7 +18,7 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/practice112', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', '112_practice.html'));
+  res.render('112_practice');
 });
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';

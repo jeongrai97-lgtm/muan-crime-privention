@@ -799,6 +799,86 @@ app.use((err, req, res, next) => {
   res.status(500).send('서버 오류가 발생했습니다.');
 });
 
+<script>
+const steps = [
+  {
+    title: "질문 1",
+    question: "여기는 112입니다. 어디에서 무슨 일이 발생했나요?",
+    audio: "q1.mp3",
+    answers: [
+      "무안읍 편의점 앞입니다. 가방을 빼앗는 걸 봤어요.",
+      "그냥 이상한 사람이 있어요."
+    ]
+  },
+  {
+    title: "질문 2",
+    question: "범인은 어느 방향으로 갔나요?",
+    audio: "q2.mp3",
+    answers: [
+      "버스정류장 쪽으로 도망갔습니다.",
+      "잘 모르겠습니다."
+    ]
+  },
+  {
+    title: "질문 3",
+    question: "다친 사람이나 위험한 상황이 있나요?",
+    audio: "q3.mp3",
+    answers: [
+      "피해자가 넘어져서 다친 것 같습니다.",
+      "현재는 크게 위험해 보이지 않습니다."
+    ]
+  }
+];
+
+let currentStep = 0;
+
+// 🔊 음성 재생
+function playAudio(file) {
+  const audio = document.getElementById("audioPlayer");
+  audio.src = "/static/audio/" + file;
+  audio.play();
+}
+
+// 🎯 화면 렌더링
+function renderStep() {
+  const step = steps[currentStep];
+
+  document.getElementById("questionTitle").innerText = step.title;
+  document.getElementById("questionText").innerText = step.question;
+
+  const answerBox = document.getElementById("answerButtons");
+  answerBox.innerHTML = "";
+
+  step.answers.forEach((answer) => {
+    const btn = document.createElement("button");
+    btn.className = "action-btn secondary";
+    btn.innerText = answer;
+    btn.onclick = nextStep;
+    answerBox.appendChild(btn);
+  });
+
+  // 🔥 질문 나오면 자동 음성 재생
+  playAudio(step.audio);
+}
+
+// 👉 다음 단계
+function nextStep() {
+  currentStep++;
+
+  if (currentStep >= steps.length) {
+    document.getElementById("quizBox").style.display = "none";
+    document.getElementById("answerButtons").style.display = "none";
+    document.getElementById("resultBox").style.display = "block";
+    return;
+  }
+
+  renderStep();
+}
+
+// 시작
+renderStep();
+</script>
+
 app.listen(PORT, () => {
   console.log(`서버 실행 중: http://localhost:${PORT}`);
 });

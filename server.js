@@ -730,37 +730,6 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/admin/posts/:id/delete', requireAdmin, async (req, res) => {
-  const result = await pool.query(
-    'SELECT * FROM posts WHERE id = $1',
-    [req.params.id]
-  );
-
-  const post = result.rows[0];
-
-  if (!post) return res.redirect('/admin');
-
-  const isSuperAdmin = req.session.adminRole === 'superadmin';
-  const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
-
-  if (!isSuperAdmin && !isAuthor) {
-    return res.status(403).send('본인이 작성한 게시글만 삭제할 수 있습니다.');
-  }
-
-  if (post.media_path && !String(post.media_path).includes('res.cloudinary.com')) {
-    const filePath = path.join(publicDir, String(post.media_path).replace(/^\//, ''));
-    if (fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (e) {}
-    }
-  }
-
-  await pool.query(
-    'DELETE FROM posts WHERE id = $1',
-    [req.params.id]
-  );
-
-  return res.redirect('/category/' + post.category);
-});
 
 app.use((err, req, res, next) => {
   console.error(err);

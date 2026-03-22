@@ -300,36 +300,37 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/category/:category', (req, res) => {
+app.get('/category/:category', async (req, res) => {
   const info = categoryInfo(req.params.category);
   if (!info) return res.status(404).send('존재하지 않는 카테고리입니다.');
 
-  const posts = db.prepare(`
-    SELECT * FROM posts
-    WHERE category = ?
-    ORDER BY id DESC
-  `).all(req.params.category);
+  const result = await pool.query(
+    `SELECT * FROM posts WHERE category = $1 ORDER BY id DESC`,
+    [req.params.category]
+  );
 
- res.render('category', {
-  info,
-  posts,
-  isAdmin: !!req.session.isAdmin,
-  adminId: req.session.adminId || null,
-  adminRole: req.session.adminRole || ''
+  res.render('category', {
+    info,
+    posts: result.rows,
+    isAdmin: !!req.session.isAdmin,
+    adminId: req.session.adminId || null,
+    adminRole: req.session.adminRole || ''
   });
-});  
+});
 
 app.get('/admin/login', (req, res) => {
   res.render('login', { error: '', isAdmin: !!req.session.isAdmin });
 });
 
-app.post('/admin/login', (req, res) => {
+app.post('/admin/login', async (req, res) => {
   const { username, password } = req.body;
 
-  const admin = db.prepare(`
-    SELECT * FROM admins
-    WHERE username = ? AND is_active = 1
-  `).get(username);
+  const result = await pool.query(
+    `SELECT * FROM admins WHERE username = $1 AND is_active = 1`,
+    [username]
+  );
+
+  const admin = result.rows[0];
 
   if (!admin) {
     return res.render('login', {
@@ -360,8 +361,13 @@ app.get('/admin/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
-app.get('/admin/posts/:id/edit', requireAdmin, (req, res) => {
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+app.get('/admin/posts/:id/edit', requireAdmin, async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM posts WHERE id = $1',
+    [req.params.id]
+  );
+
+  const post = result.rows[0];
   if (!post) return res.redirect('/admin');
 
   const isSuperAdmin = req.session.adminRole === 'superadmin';
@@ -370,7 +376,7 @@ app.get('/admin/posts/:id/edit', requireAdmin, (req, res) => {
   if (!isSuperAdmin && !isAuthor) {
     return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
   }
-  
+
   res.render('edit', {
     post,
     categories,
@@ -381,15 +387,20 @@ app.get('/admin/posts/:id/edit', requireAdmin, (req, res) => {
 
 app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
   upload.single('media')(req, res, async function(err) {
-    const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+    const result = await pool.query(
+      'SELECT * FROM posts WHERE id = $1',
+      [req.params.id]
+    );
+
+    const post = result.rows[0];
     if (!post) return res.redirect('/admin');
 
-const isSuperAdmin = req.session.adminRole === 'superadmin';
-const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
+    const isSuperAdmin = req.session.adminRole === 'superadmin';
+    const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
 
-if (!isSuperAdmin && !isAuthor) {
-  return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
-}
+    if (!isSuperAdmin && !isAuthor) {
+      return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
+    }
     
     if (err) {
       return res.status(400).render('edit', {
@@ -443,18 +454,29 @@ if (!isSuperAdmin && !isAuthor) {
       }
     }
 
-    db.prepare(`
-      UPDATE posts
-      SET category = ?, title = ?, content = ?, media_path = ?, media_type = ?
-      WHERE id = ?
-    `).run(category, title.trim(), content.trim(), mediaPath, mediaType, req.params.id);
+await pool.query(
+  `UPDATE posts
+   SET category = $1, title = $2, content = $3, media_path = $4, media_type = $5
+   WHERE id = $6`,
+  [
+    category,
+    title.trim(),
+    content.trim(),
+    mediaPath,
+    mediaType,
+    req.params.id
+  ]
+);
 
-    return res.redirect('/category/' + category);
-  });
-});
+return res.redirect('/category/' + category);
 
-app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+app.post('/admin/posts/:id/delete', requireAdmin, async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM posts WHERE id = $1',
+    [req.params.id]
+  );
+
+  const post = result.rows[0];
 
   if (!post) return res.redirect('/admin');
 
@@ -466,29 +488,32 @@ app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
   }
 
   if (post.media_path && !String(post.media_path).includes('res.cloudinary.com')) {
-    const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
+    const filePath = path.join(publicDir, String(post.media_path).replace(/^\//, ''));
     if (fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (e) {}
     }
   }
 
-  db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+  await pool.query(
+    'DELETE FROM posts WHERE id = $1',
+    [req.params.id]
+  );
 
   return res.redirect('/category/' + post.category);
-});  
+});
   
-app.get('/admin', requireAdmin, (req, res) => {
-  const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
-  const admins = db.prepare(`
+app.get('/admin', requireAdmin, async (req, res) => {
+  const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
+  const adminsResult = await pool.query(`
     SELECT id, username, display_name, role, is_active, created_at
     FROM admins
     ORDER BY id ASC
-  `).all();
+  `);
 
   res.render('admin', {
     categories,
-    posts,
-    admins,
+    posts: postsResult.rows,
+    admins: adminsResult.rows,
     isAdmin: true,
     isSuperAdmin: req.session.adminRole === 'superadmin',
     adminName: req.session.adminName || '',
@@ -507,17 +532,20 @@ app.get('/admin/posts/new', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/admin/password', requireAdmin, (req, res) => {
+app.post('/admin/password', requireAdmin, async (req, res) => {
   const { current_password, new_password, confirm_password } = req.body;
 
-  const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
-  const admins = db.prepare(`
+  const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
+  const adminsResult = await pool.query(`
     SELECT id, username, display_name, role, is_active, created_at
     FROM admins
     ORDER BY id ASC
-  `).all();
+  `);
 
-  if (!current_password || !new_password || !confirm_password) {
+  const posts = postsResult.rows;
+  const admins = adminsResult.rows;
+
+ if (!current_password || !new_password || !confirm_password) {
     return res.status(400).render('admin', {
       categories,
       posts,
@@ -556,10 +584,12 @@ app.post('/admin/password', requireAdmin, (req, res) => {
     });
   }
 
-  const admin = db.prepare(`
-    SELECT * FROM admins
-    WHERE id = ? AND is_active = 1
-  `).get(req.session.adminId);
+  const adminResult = await pool.query(
+    `SELECT * FROM admins WHERE id = $1 AND is_active = 1`,
+    [req.session.adminId]
+  );
+
+  const admin = adminResult.rows[0];
 
   if (!admin) {
     return res.status(400).render('admin', {
@@ -591,11 +621,10 @@ app.post('/admin/password', requireAdmin, (req, res) => {
 
   const newHash = bcrypt.hashSync(new_password, 10);
 
-  db.prepare(`
-    UPDATE admins
-    SET password_hash = ?
-    WHERE id = ?
-  `).run(newHash, admin.id);
+  await pool.query(
+    `UPDATE admins SET password_hash = $1 WHERE id = $2`,
+    [newHash, admin.id]
+  );
 
   return res.render('admin', {
     categories,
@@ -609,133 +638,41 @@ app.post('/admin/password', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/admin/users', requireSuperAdmin, (req, res) => {
-  const { username, display_name } = req.body;
+app.post('/admin/users/:id/password-reset', requireSuperAdmin, async (req, res) => {
+  const id = req.params.id;
 
-  const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
-  const admins = db.prepare(`
-    SELECT id, username, display_name, role, is_active, created_at
-    FROM admins
-    ORDER BY id ASC
-  `).all();
+  const targetResult = await pool.query(
+    `SELECT * FROM admins WHERE id = $1`,
+    [id]
+  );
 
-  if (!username || !display_name) {
-    return res.status(400).render('admin', {
-      categories,
-      posts,
-      admins,
-      isAdmin: true,
-      isSuperAdmin: req.session.adminRole === 'superadmin',
-      adminName: req.session.adminName || '',
-      error: '아이디와 닉네임을 모두 입력해주세요.',
-      success: ''
-    });
-  }
+  const target = targetResult.rows[0];
 
-  const exists = db.prepare(`
-    SELECT * FROM admins
-    WHERE username = ?
-  `).get(username.trim());
-
-  if (exists) {
-    return res.status(400).render('admin', {
-      categories,
-      posts,
-      admins,
-      isAdmin: true,
-      isSuperAdmin: req.session.adminRole === 'superadmin',
-      adminName: req.session.adminName || '',
-      error: '이미 존재하는 관리자 아이디입니다.',
-      success: ''
-    });
+  if (!target || target.role === 'superadmin') {
+    return res.redirect('/admin');
   }
 
   const hash = bcrypt.hashSync(DEFAULT_EDITOR_PASSWORD, 10);
 
-  db.prepare(`
-    INSERT INTO admins (username, password_hash, display_name, role, is_active)
-    VALUES (?, ?, ?, ?, 1)
-  `).run(
-    username.trim(),
-    hash,
-    display_name.trim(),
-    'editor'
+  await pool.query(
+    `UPDATE admins SET password_hash = $1 WHERE id = $2`,
+    [hash, id]
   );
 
   return res.redirect('/admin');
 });
-
-app.post('/admin/users/:id/update', requireSuperAdmin, (req, res) => {
-  const { display_name } = req.body;
-  const id = req.params.id;
-
-  if (!display_name || !display_name.trim()) {
-    return res.redirect('/admin');
-  }
-
-  db.prepare(`
-    UPDATE admins
-    SET display_name = ?
-    WHERE id = ? AND role != 'superadmin'
-  `).run(display_name.trim(), id);
-
-  return res.redirect('/admin');
-});
-
-app.post('/admin/users/:id/password-reset', requireSuperAdmin, (req, res) => {
-  const id = req.params.id;
-
-  const target = db.prepare(`
-    SELECT * FROM admins
-    WHERE id = ?
-  `).get(id);
-
-  if (!target || target.role === 'superadmin') {
-    return res.redirect('/admin');
-  }
-
-  const hash = bcrypt.hashSync(DEFAULT_EDITOR_PASSWORD, 10);
-
-  db.prepare(`
-    UPDATE admins
-    SET password_hash = ?
-    WHERE id = ?
-  `).run(hash, id);
-
-  return res.redirect('/admin');
-});
-
-app.post('/admin/users/:id/toggle-active', requireSuperAdmin, (req, res) => {
-  const id = req.params.id;
-
-  const target = db.prepare(`
-    SELECT * FROM admins
-    WHERE id = ?
-  `).get(id);
-
-  if (!target || target.role === 'superadmin') {
-    return res.redirect('/admin');
-  }
-
-  const nextValue = target.is_active ? 0 : 1;
-
-  db.prepare(`
-    UPDATE admins
-    SET is_active = ?
-    WHERE id = ?
-  `).run(nextValue, id);
-
-  return res.redirect('/admin');
-});
-
+    
 app.post('/admin/posts', requireAdmin, (req, res) => {
   upload.single('media')(req, res, async function(err) {
-    const posts = db.prepare(`SELECT * FROM posts ORDER BY id DESC`).all();
-    const admins = db.prepare(`
+    const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
+    const adminsResult = await pool.query(`
       SELECT id, username, display_name, role, is_active, created_at
       FROM admins
       ORDER BY id ASC
-    `).all();
+    `);
+
+    const posts = postsResult.rows;
+    const admins = adminsResult.rows;
 
     if (err) {
       return res.status(400).render('admin', {
@@ -773,25 +710,31 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       mediaPath = `/uploads/${req.file.filename}`;
     }
 
-    db.prepare(`
-      INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      category,
-      title.trim(),
-      content.trim(),
-      mediaPath,
-      mediaType,
-      req.session.adminId || null,
-      req.session.adminName || '무안경찰서'
-    );
+  await pool.query(
+  `INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
+   VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+  [
+    category,
+    title.trim(),
+    content.trim(),
+    mediaPath,
+    mediaType,
+    req.session.adminId || null,
+    req.session.adminName || '무안경찰서'
+  ]
+);
 
     return res.redirect('/category/' + category);
   });
 });
 
-app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+app.post('/admin/posts/:id/delete', requireAdmin, async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM posts WHERE id = $1',
+    [req.params.id]
+  );
+
+  const post = result.rows[0];
 
   if (!post) return res.redirect('/admin');
 
@@ -803,13 +746,16 @@ app.post('/admin/posts/:id/delete', requireAdmin, (req, res) => {
   }
 
   if (post.media_path && !String(post.media_path).includes('res.cloudinary.com')) {
-    const filePath = path.join(publicDir, post.media_path.replace(/^\//, ''));
+    const filePath = path.join(publicDir, String(post.media_path).replace(/^\//, ''));
     if (fs.existsSync(filePath)) {
       try { fs.unlinkSync(filePath); } catch (e) {}
     }
   }
 
-  db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+  await pool.query(
+    'DELETE FROM posts WHERE id = $1',
+    [req.params.id]
+  );
 
   return res.redirect('/category/' + post.category);
 });

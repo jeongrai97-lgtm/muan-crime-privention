@@ -1368,3 +1368,34 @@ body {
 .topbar {
   justify-content: flex-end !important;
 }
+
+.hero-112-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 18px;
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffd54f, #ffb300);
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+
+.hero-112-btn:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .hero-112-btn {
+    min-height: 54px;
+    font-size: 16px;
+    border-radius: 16px;
+  }
+}

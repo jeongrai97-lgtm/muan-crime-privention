@@ -647,7 +647,8 @@ body {
   .hero-section {
     max-width: 640px;
     margin: 20px auto 32px;
-    
+  } 
+  
   .category-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
@@ -1338,5 +1339,56 @@ body {
   .quick-right-box {
     height: 36px;
     border-radius: 12px;
+  }
+}
+
+/* =========================
+   배너 제거 최종본
+   ========================= */
+
+.hero-section {
+  display: none !important;
+}
+
+.home-shell {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 12px 16px 32px;
+}
+
+.category-grid {
+  margin-top: 12px !important;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 12px 16px 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .topbar .title {
+    font-size: 17px;
+  }
+
+  .topbar .nav {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .topbar .nav a {
+    flex: 1;
+    min-width: 100px;
+    height: 42px;
+    font-size: 14px;
+  }
+
+  .home-shell {
+    padding-top: 8px;
+  }
+
+  .category-grid {
+    margin-top: 8px !important;
   }
 }

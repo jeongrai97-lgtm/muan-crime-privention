@@ -17,7 +17,7 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/practice112', (req, res) => {
+app.get('/practice-112', (req, res) => {
   res.render('112_practice');
 });
 

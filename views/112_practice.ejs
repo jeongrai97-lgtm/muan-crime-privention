@@ -1,94 +1,4 @@
 <!DOCTYPE html>
-   <style>
-   .footer-note {
-      margin-top: 18px;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #6b7280;
-      text-align: center;
-    }
-
-    @media (max-width: 640px) {
-      .page {
-        padding: 16px 14px 32px;
-      }
-      .hero {
-        border-radius: 24px;
-        padding: 22px 18px;
-      }
-      .hero h1 {
-        font-size: 26px;
-      }
-      .card {
-        border-radius: 20px;
-        padding: 18px 16px;
-      }
-      .card h2 {
-        font-size: 20px;
-      }
-      .actions {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="top-actions">
-      <a href="/" class="back-btn">← 홈으로</a>
-    </div>
-
-    <section class="hero">
-      <h1>112 신고연습</h1>
-      <p>
-        실제 신고 전, 어떤 내용을 말하면 되는지 미리 연습해보는 화면입니다.
-        침착하게 위치, 상황, 위험 여부를 전달하는 연습을 해보세요.
-      </p>
-      <div class="notice">
-        본 페이지는 교육·연습용 예시입니다. 실제 위험 상황에서는 지체하지 말고 즉시 112에 신고하세요.
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>신고할 때 꼭 말해야 하는 3가지</h2>
-      <div class="step-list">
-        <div class="step">
-          <span class="step-num">1</span>
-          <strong>어디인지</strong>
-          <p>현재 위치, 주소, 건물명, 주변 큰 표지물 등을 먼저 말합니다.</p>
-        </div>
-        <div class="step">
-          <span class="step-num">2</span>
-          <strong>무슨 일인지</strong>
-          <p>절도, 폭행, 보이스피싱 의심, 소란, 교통사고 등 상황을 짧고 분명하게 말합니다.</p>
-        </div>
-        <div class="step">
-          <span class="step-num">3</span>
-          <strong>지금 얼마나 위험한지</strong>
-          <p>가해자 유무, 흉기 여부, 다친 사람 여부, 도주 방향 등을 알려줍니다.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-  <h2>🎧 112 신고 대화 연습</h2>
-
-  <div id="quizBox" class="scenario-box">
-    <div class="scenario-title" id="questionTitle"></div>
-    <p class="scenario-text" id="questionText"></p>
-  </div>
-
-  <div id="answerButtons"></div>
-
-  <div class="result" id="resultBox" style="display:none;">
-    ✅ 잘하셨습니다!<br>
-    신고는 <b>위치 → 상황 → 위험</b> 순서로 말하면 가장 빠릅니다.
-  </div>
-</section>
-
-<audio id="audioPlayer"></audio>  
-
-<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -139,6 +49,136 @@
       font-weight: 700;
     }
 
+    .practice-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      height: 44px;
+      border: none;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #2b85ff, #125ed0);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.22);
+      border-radius: 28px;
+      padding: 22px 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-title {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.25;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+    }
+
+    .hero-desc {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.88);
+      word-break: keep-all;
+    }
+
+    .notice {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.10);
+      font-size: 14px;
+      line-height: 1.6;
+      color: #dfeaff;
+    }
+
+    .section-title {
+      margin: 20px 0 12px;
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .step-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .step-num {
+      display: inline-flex;
+      width: 30px;
+      height: 30px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #1565c0;
+      color: #fff;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .step p,
+    .scenario-text,
+    .guide-text {
+      margin: 0;
+      color: rgba(255,255,255,0.82);
+      font-size: 14px;
+      line-height: 1.65;
+      word-break: keep-all;
+    }
+
+    .scenario-box {
+      border-radius: 18px;
+      padding: 15px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-top: 12px;
+    }
+
+    .scenario-title {
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      color: #8cc2ff;
+    }
+
     .phone-screen {
       position: relative;
       overflow: hidden;
@@ -147,7 +187,7 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
       border: 1px solid rgba(255,255,255,0.10);
       box-shadow: 0 20px 50px rgba(0,0,0,0.34);
-      min-height: calc(100vh - 90px);
+      min-height: 760px;
       backdrop-filter: blur(10px);
     }
 
@@ -559,6 +599,7 @@
       .answer-btn { font-size: 14px; }
       .call-actions { gap: 10px; }
       .call-icon { width: 52px; height: 52px; font-size: 22px; }
+      .practice-tabs { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -566,83 +607,137 @@
   <div class="page">
     <div class="topbar">
       <a href="/" class="back-btn">← 홈으로</a>
-      <div class="status-text">112 신고연습 · 통화모드</div>
+      <div class="status-text">112 신고연습</div>
     </div>
 
-    <div class="phone-screen">
-      <div class="dynamic-island"></div>
+    <div class="practice-tabs">
+      <button class="tab-btn active" onclick="showTab('scenario')">1. 시나리오 보기</button>
+      <button class="tab-btn" onclick="showTab('voice')">2. 음성 체험하기</button>
+    </div>
 
-      <div class="call-header">
-        <div class="call-status" id="callStatus">112 연결됨</div>
-        <div class="call-name">112</div>
-        <div class="call-sub">실제 신고 전, 접수요원의 질문에 어떻게 답하면 좋은지 전화처럼 연습해보세요.</div>
-      </div>
-
-      <div class="avatar-wrap">
-        <div class="avatar-ring">
-          <div class="avatar-inner">👮</div>
-        </div>
-      </div>
-
-      <div class="wave-row" id="waveRow">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-      </div>
-
-      <div class="question-card" id="quizBox">
-        <div class="question-top">
-          <div class="badge" id="questionTitle">질문 1</div>
-          <button class="replay-btn" onclick="replayCurrentAudio()">🔊 다시 듣기</button>
-        </div>
-        <div class="question-text" id="questionText"></div>
-      </div>
-
-      <div class="hint-box" id="hintBox">
-        <div class="hint-title">신고 팁</div>
-        <p class="hint-text" id="hintText"></p>
-      </div>
-
-      <div class="answer-buttons" id="answerButtons"></div>
-
-      <div class="feedback-box" id="feedbackBox"></div>
-
-      <div class="call-actions">
-        <div class="call-icon-btn">
-          <div class="call-icon">🔇</div>
-          <span>음소거</span>
-        </div>
-        <div class="call-icon-btn">
-          <div class="call-icon">⌨️</div>
-          <span>키패드</span>
-        </div>
-        <div class="call-icon-btn">
-          <div class="call-icon">🔊</div>
-          <span>스피커</span>
-        </div>
-      </div>
-
-      <div class="bottom-controls">
-        <button class="control-btn secondary" onclick="replayCurrentAudio()">🔁</button>
-        <button class="control-btn danger" onclick="goHome()">📞</button>
-      </div>
-
-      <div class="result-box" id="resultBox">
-        <div class="result-title">연습 완료</div>
-        <p class="result-text" id="resultText">
-          잘하셨습니다. 신고할 때는 위치, 상황, 위험 여부를 차례대로 말하면 더욱 빠르게 도움을 받을 수 있습니다.
+    <div id="scenarioTab" class="tab-panel active">
+      <div class="card">
+        <h1 class="hero-title">112 신고연습</h1>
+        <p class="hero-desc">
+          실제 신고 전, 어떤 내용을 말하면 되는지 미리 연습해보는 화면입니다.
+          침착하게 위치, 상황, 위험 여부를 전달하는 연습을 해보세요.
         </p>
-        <div class="result-actions">
-          <button class="result-action-btn result-primary" onclick="restartPractice()">다시 연습하기</button>
-          <button class="result-action-btn result-secondary" onclick="goHome()">홈으로</button>
+
+        <div class="notice">
+          본 페이지는 교육·연습용 예시입니다. 실제 위험 상황에서는 지체하지 말고 즉시 112에 신고하세요.
+        </div>
+
+        <h2 class="section-title">신고할 때 꼭 말해야 하는 3가지</h2>
+        <div class="step-list">
+          <div class="step">
+            <span class="step-num">1</span>
+            <strong>어디인지</strong>
+            <p>현재 위치, 주소, 건물명, 주변 큰 표지물 등을 먼저 말합니다.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <strong>무슨 일인지</strong>
+            <p>절도, 폭행, 보이스피싱 의심, 소란, 교통사고 등 상황을 짧고 분명하게 말합니다.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <strong>지금 얼마나 위험한지</strong>
+            <p>가해자 유무, 흉기 여부, 다친 사람 여부, 도주 방향 등을 알려줍니다.</p>
+          </div>
+        </div>
+
+        <h2 class="section-title">예시 시나리오</h2>
+        <div class="scenario-box">
+          <div class="scenario-title">상황 예시</div>
+          <p class="scenario-text">
+            밤길에 귀가하던 중, 한 남성이 앞사람의 가방을 빼앗아 도망가는 장면을 목격했습니다.
+            주변에는 편의점이 있고, 도주 방향은 버스정류장 쪽입니다.
+          </p>
+        </div>
+
+        <div class="scenario-box">
+          <div class="scenario-title">예시 답변</div>
+          <p class="guide-text">
+            “무안읍 ○○편의점 앞입니다. 방금 한 남성이 여성 가방을 빼앗고 버스정류장 방향으로 도망갔습니다.
+            피해자는 넘어진 상태입니다.”
+          </p>
         </div>
       </div>
+    </div>
 
-      <div class="foot-note">
-        본 페이지는 교육용입니다. 실제 위급 상황에서는 지체하지 말고 즉시 112에 신고하세요.
+    <div id="voiceTab" class="tab-panel">
+      <div class="phone-screen">
+        <div class="dynamic-island"></div>
+
+        <div class="call-header">
+          <div class="call-status" id="callStatus">112 연결됨</div>
+          <div class="call-name">112</div>
+          <div class="call-sub">실제 신고 전, 접수요원의 질문에 어떻게 답하면 좋은지 전화처럼 연습해보세요.</div>
+        </div>
+
+        <div class="avatar-wrap">
+          <div class="avatar-ring">
+            <div class="avatar-inner">👮</div>
+          </div>
+        </div>
+
+        <div class="wave-row" id="waveRow">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+
+        <div class="question-card" id="quizBox">
+          <div class="question-top">
+            <div class="badge" id="questionTitle">질문 1</div>
+            <button class="replay-btn" onclick="replayCurrentAudio()">🔊 다시 듣기</button>
+          </div>
+          <div class="question-text" id="questionText"></div>
+        </div>
+
+        <div class="hint-box" id="hintBox">
+          <div class="hint-title">신고 팁</div>
+          <p class="hint-text" id="hintText"></p>
+        </div>
+
+        <div class="answer-buttons" id="answerButtons"></div>
+        <div class="feedback-box" id="feedbackBox"></div>
+
+        <div class="call-actions">
+          <div class="call-icon-btn">
+            <div class="call-icon">🔇</div>
+            <span>음소거</span>
+          </div>
+          <div class="call-icon-btn">
+            <div class="call-icon">⌨️</div>
+            <span>키패드</span>
+          </div>
+          <div class="call-icon-btn">
+            <div class="call-icon">🔊</div>
+            <span>스피커</span>
+          </div>
+        </div>
+
+        <div class="bottom-controls">
+          <button class="control-btn secondary" onclick="replayCurrentAudio()">🔁</button>
+          <button class="control-btn danger" onclick="goHome()">📞</button>
+        </div>
+
+        <div class="result-box" id="resultBox">
+          <div class="result-title">연습 완료</div>
+          <p class="result-text" id="resultText"></p>
+          <div class="result-actions">
+            <button class="result-action-btn result-primary" onclick="restartPractice()">다시 연습하기</button>
+            <button class="result-action-btn result-secondary" onclick="goHome()">홈으로</button>
+          </div>
+        </div>
+
+        <div class="foot-note">
+          본 페이지는 교육용입니다. 실제 위급 상황에서는 지체하지 말고 즉시 112에 신고하세요.
+        </div>
       </div>
     </div>
   </div>
@@ -650,12 +745,30 @@
   <audio id="audioPlayer"></audio>
 
   <script>
+    function showTab(tabName) {
+      const scenarioTab = document.getElementById("scenarioTab");
+      const voiceTab = document.getElementById("voiceTab");
+      const buttons = document.querySelectorAll(".tab-btn");
+
+      scenarioTab.classList.remove("active");
+      voiceTab.classList.remove("active");
+      buttons.forEach(btn => btn.classList.remove("active"));
+
+      if (tabName === "scenario") {
+        scenarioTab.classList.add("active");
+        buttons[0].classList.add("active");
+      } else {
+        voiceTab.classList.add("active");
+        buttons[1].classList.add("active");
+      }
+    }
+
     const steps = [
       {
         title: "질문 1",
         question: "여기는 112입니다. 어디에서 무슨 일이 발생했나요?",
         hint: "위치와 상황을 함께 말하면 가장 좋아요. 예: 무안읍 ○○편의점 앞에서 가방을 빼앗는 장면을 봤습니다.",
-        audio: "/static/audio/q1.mp3",
+        audio: "/audio/q1.mp3",
         feedbackGood: "좋아요. 위치와 상황을 함께 말하면 출동이 더 빨라집니다.",
         feedbackBad: "조금 아쉬워요. 먼저 현재 위치를 말하고, 어떤 일이 생겼는지 바로 알려주세요.",
         answers: [
@@ -667,7 +780,7 @@
         title: "질문 2",
         question: "범인은 어느 방향으로 갔나요? 옷차림도 보였나요?",
         hint: "이동 방향, 옷 색깔, 인원 수처럼 바로 보이는 정보만 짧게 말하면 됩니다.",
-        audio: "/static/audio/q2.mp3",
+        audio: "/audio/q2.mp3",
         feedbackGood: "좋습니다. 방향과 옷차림은 현장 확인에 큰 도움이 됩니다.",
         feedbackBad: "괜찮아요. 잘 못 봤더라도 방향이나 대략적인 특징 하나만 말해도 도움이 됩니다.",
         answers: [
@@ -679,7 +792,7 @@
         title: "질문 3",
         question: "다친 사람이나 지금 위험한 상황이 있나요?",
         hint: "피해자 상태, 흉기 여부, 주변 위험 여부를 말하면 우선 대응에 도움이 됩니다.",
-        audio: "/static/audio/q3.mp3",
+        audio: "/audio/q3.mp3",
         feedbackGood: "아주 좋아요. 피해자의 상태를 알려주면 현장 대응 순서를 빨리 정할 수 있습니다.",
         feedbackBad: "위험 여부를 꼭 말해보세요. 다친 사람, 흉기, 추가 위험이 있는지가 중요합니다.",
         answers: [
@@ -692,7 +805,6 @@
     let currentStep = 0;
     let goodCount = 0;
     let currentAudio = "";
-
     const audioPlayer = document.getElementById("audioPlayer");
 
     function playAudio(file) {
@@ -720,8 +832,8 @@
       feedbackBox.style.display = "none";
       feedbackBox.className = "feedback-box";
       feedbackBox.innerHTML = "";
-
       answerBox.innerHTML = "";
+
       step.answers.forEach((answer) => {
         const btn = document.createElement("button");
         btn.className = "answer-btn";
@@ -792,6 +904,7 @@
       document.getElementById("waveRow").style.display = "flex";
       document.getElementById("resultBox").style.display = "none";
       renderStep();
+      showTab("voice");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -803,87 +916,3 @@
   </script>
 </body>
 </html>
-      
-<script>
-const steps = [
-  {
-    title: "질문 1",
-    question: "여기는 112입니다. 어디에서 무슨 일이 발생했나요?",
-    audio: "q1.mp3",
-    answers: [
-      "무안읍 편의점 앞입니다. 가방을 빼앗는 걸 봤어요.",
-      "그냥 이상한 사람이 있어요."
-    ]
-  },
-  {
-    title: "질문 2",
-    question: "범인은 어느 방향으로 갔나요?",
-    audio: "q2.mp3",
-    answers: [
-      "버스정류장 쪽으로 도망갔습니다.",
-      "잘 모르겠습니다."
-    ]
-  },
-  {
-    title: "질문 3",
-    question: "다친 사람이나 위험한 상황이 있나요?",
-    audio: "q3.mp3",
-    answers: [
-      "피해자가 넘어져서 다친 것 같습니다.",
-      "현재는 크게 위험해 보이지 않습니다."
-    ]
-  }
-];
-
-let currentStep = 0;
-
-// 🔊 음성 재생
-function playAudio(file) {
-  const audio = document.getElementById("audioPlayer");
-  audio.src = "/static/audio/" + file;
-  audio.play();
-}
-
-// 🎯 화면 렌더링
-function renderStep() {
-  const step = steps[currentStep];
-
-  document.getElementById("questionTitle").innerText = step.title;
-  document.getElementById("questionText").innerText = step.question;
-
-  const answerBox = document.getElementById("answerButtons");
-  answerBox.innerHTML = "";
-
-  step.answers.forEach((answer) => {
-    const btn = document.createElement("button");
-    btn.className = "action-btn secondary";
-    btn.innerText = answer;
-    btn.onclick = nextStep;
-    answerBox.appendChild(btn);
-  });
-
-  // 🔥 질문 나오면 자동 음성 재생
-  playAudio(step.audio);
-}
-
-// 👉 다음 단계
-function nextStep() {
-  currentStep++;
-
-  if (currentStep >= steps.length) {
-    document.getElementById("quizBox").style.display = "none";
-    document.getElementById("answerButtons").style.display = "none";
-    document.getElementById("resultBox").style.display = "block";
-    return;
-  }
-
-  renderStep();
-}
-
-// 시작
-renderStep();
-</script>
-
-app.listen(PORT, () => {
-  console.log(`서버 실행 중: http://localhost:${PORT}`);
-});

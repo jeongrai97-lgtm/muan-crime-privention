@@ -925,11 +925,7 @@
       playAudio(currentAudio);
     }
 
-    function renderStep() {
-      const steps = getCurrentSteps();
-      const step = steps[currentStep];
-
-      function renderStep() {
+  function renderStep() {
   const steps = getCurrentSteps();
   const step = steps[currentStep];
 
@@ -958,9 +954,6 @@
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
 }
-
-      playAudio(step.audio);
-    }
 
     function selectAnswer(isGood) {
       const steps = getCurrentSteps();

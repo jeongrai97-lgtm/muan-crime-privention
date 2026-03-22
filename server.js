@@ -503,7 +503,7 @@ app.post('/admin/posts/:id/delete', requireAdmin, async (req, res) => {
 
   return res.redirect('/category/' + post.category);
 });
-  
+
 app.get('/admin', requireAdmin, async (req, res) => {
   const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
   const adminsResult = await pool.query(`
@@ -547,7 +547,7 @@ app.post('/admin/password', requireAdmin, async (req, res) => {
   const posts = postsResult.rows;
   const admins = adminsResult.rows;
 
- if (!current_password || !new_password || !confirm_password) {
+  if (!current_password || !new_password || !confirm_password) {
     return res.status(400).render('admin', {
       categories,
       posts,
@@ -663,7 +663,7 @@ app.post('/admin/users/:id/password-reset', requireSuperAdmin, async (req, res) 
 
   return res.redirect('/admin');
 });
-    
+
 app.post('/admin/posts', requireAdmin, (req, res) => {
   upload.single('media')(req, res, async function(err) {
     const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
@@ -712,24 +712,23 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       mediaPath = `/uploads/${req.file.filename}`;
     }
 
-  await pool.query(
-  `INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
-   VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-  [
-    category,
-    title.trim(),
-    content.trim(),
-    mediaPath,
-    mediaType,
-    req.session.adminId || null,
-    req.session.adminName || '무안경찰서'
-  ]
-);
+    await pool.query(
+      `INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        category,
+        title.trim(),
+        content.trim(),
+        mediaPath,
+        mediaType,
+        req.session.adminId || null,
+        req.session.adminName || '무안경찰서'
+      ]
+    );
 
     return res.redirect('/category/' + category);
   });
 });
-
 
 app.use((err, req, res, next) => {
   console.error(err);

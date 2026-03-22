@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
 const multer = require('multer');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const ffmpegPath = require('ffmpeg-static');
 const { spawn } = require('child_process');
@@ -71,61 +71,79 @@ const upload = multer({
   }
 });
 
-const db = new Database(path.join(__dirname, 'crime_guide.db'));
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    author_id INTEGER,
-    author_name TEXT,
-    category TEXT NOT NULL,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    media_path TEXT,
-    media_type TEXT,
-    created_at TEXT DEFAULT (datetime('now', 'localtime'))
-  );
-`);
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS posts (
+      id SERIAL PRIMARY KEY,
+      author_id INTEGER,
+      author_name TEXT,
+      category TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      media_path TEXT,
+      media_type TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
-try {
-  db.exec(`ALTER TABLE posts ADD COLUMN author_id INTEGER;`);
-} catch (e) {}
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      role TEXT NOT NULL,
+      is_active INTEGER DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
 
-try {
-  db.exec(`ALTER TABLE posts ADD COLUMN author_name TEXT;`);
-} catch (e) {}
+async function bootstrap() {
+  await initDb();
+  await seedInitialData();
+}
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    role TEXT NOT NULL,
-    is_active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT (datetime('now', 'localtime'))
-  );
-`);
+bootstrap().catch(err => {
+  console.error('DB 초기화 오류:', err);
+});
 
 const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
 
-const superadminExists = db.prepare(
-  `SELECT * FROM admins WHERE username = ?`
-).get('superadmin');
+async function seedInitialData() {
+  const superadminExists = await pool.query(
+    `SELECT * FROM admins WHERE username = $1`,
+    ['superadmin']
+  );
 
-if (!superadminExists) {
-  db.prepare(`
-    INSERT INTO admins (username, password_hash, display_name, role, is_active)
-    VALUES (?, ?, ?, ?, 1)
-  `).run('superadmin', superadminHash, '범죄예방대응과', 'superadmin');
+  if (superadminExists.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO admins (username, password_hash, display_name, role, is_active)
+       VALUES ($1, $2, $3, $4, 1)`,
+      ['superadmin', superadminHash, '범죄예방대응과', 'superadmin']
+    );
+  }
+
+  // 기존 카테고리 구조를 최신 구조로 자동 정리
+  await pool.query(`
+    UPDATE posts SET category = '__tmp_foreign__' WHERE category = 'foreign';
+  `);
+
+  await pool.query(`
+    UPDATE posts SET category = 'foreign' WHERE category = 'phishing';
+  `);
+
+  await pool.query(`
+    UPDATE posts SET category = 'notice' WHERE category = '__tmp_foreign__';
+  `);
 }
-
-// 기존 카테고리 구조를 최신 구조로 자동 정리
-db.exec(`
-  UPDATE posts SET category = '__tmp_foreign__' WHERE category = 'foreign';
-  UPDATE posts SET category = 'foreign' WHERE category = 'phishing';
-  UPDATE posts SET category = 'notice' WHERE category = '__tmp_foreign__';
-`);
 
 const categories = [
   { key: 'theft', name: '절도예방수칙', icon: '🚨' },
@@ -143,22 +161,17 @@ function requireAdmin(req, res, next) {
   return res.redirect('/admin/login');
 }
 
-function requireSuperAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin && req.session.adminRole === 'superadmin') {
-    return next();
-  }
-  return res.status(403).send('권한이 없습니다.');
-}
-
-function requireSuperAdmin(req, res, next) {
+async function requireSuperAdmin(req, res, next) {
   if (!req.session || !req.session.isAdmin || !req.session.adminId) {
     return res.status(403).send('권한이 없습니다.');
   }
 
-  const admin = db.prepare(`
-    SELECT * FROM admins
-    WHERE id = ? AND is_active = 1
-  `).get(req.session.adminId);
+  const result = await pool.query(
+    `SELECT * FROM admins WHERE id = $1 AND is_active = 1`,
+    [req.session.adminId]
+  );
+
+  const admin = result.rows[0];
 
   if (!admin || admin.role !== 'superadmin') {
     return res.status(403).send('권한이 없습니다.');

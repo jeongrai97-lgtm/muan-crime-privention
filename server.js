@@ -674,7 +674,10 @@ app.post('/admin/users/:id/password-reset', requireSuperAdmin, async (req, res) 
 });
 
 app.post('/admin/posts', requireAdmin, (req, res) => {
-  upload.single('media')(req, res, async function(err) {
+  upload.fields([
+    { name: 'images', maxCount: 10 },
+    { name: 'video', maxCount: 1 }
+  ])(req, res, async function(err) {
     const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
     const adminsResult = await pool.query(`
       SELECT id, username, display_name, role, is_active, created_at
@@ -714,7 +717,10 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     }
 
  app.post('/admin/posts', requireAdmin, (req, res) => {
-  upload.array('media', 10)(req, res, async function(err) {
+  upload.fields([
+    { name: 'images', maxCount: 10 },
+    { name: 'video', maxCount: 1 }
+  ])(req, res, async function(err) {
     const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
     const adminsResult = await pool.query(`
       SELECT id, username, display_name, role, is_active, created_at
@@ -753,51 +759,58 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       });
     }
 
+    const imageFiles = (req.files && req.files.images) ? req.files.images : [];
+    const videoFiles = (req.files && req.files.video) ? req.files.video : [];
+
     let mediaPath = '';
     let mediaType = '';
     let uploadedImages = [];
 
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const kind = getMediaKind(file.mimetype);
+    if (videoFiles.length > 0) {
+      const videoFile = videoFiles[0];
 
-        if (kind !== 'image') {
-          deleteFileSafe(file.path);
-          return res.status(400).render('admin', {
-            categories,
-            posts,
-            admins,
-            isAdmin: true,
-            isSuperAdmin: req.session.adminRole === 'superadmin',
-            adminName: req.session.adminName || '',
-            error: '여러 장 업로드는 사진만 가능합니다.',
-            success: ''
-          });
-        }
-
-        try {
-          const imageUrl = await uploadFileToCloudinary(file.path, 'image');
-          uploadedImages.push(imageUrl);
-          deleteFileSafe(file.path);
-        } catch (e) {
-          deleteFileSafe(file.path);
-          return res.status(400).render('admin', {
-            categories,
-            posts,
-            admins,
-            isAdmin: true,
-            isSuperAdmin: req.session.adminRole === 'superadmin',
-            adminName: req.session.adminName || '',
-            error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
-            success: ''
-          });
-        }
+      try {
+        mediaPath = await uploadFileToCloudinary(videoFile.path, 'video');
+        mediaType = 'video';
+        deleteFileSafe(videoFile.path);
+      } catch (e) {
+        deleteFileSafe(videoFile.path);
+        return res.status(400).render('admin', {
+          categories,
+          posts,
+          admins,
+          isAdmin: true,
+          isSuperAdmin: req.session.adminRole === 'superadmin',
+          adminName: req.session.adminName || '',
+          error: e.message || '영상 업로드 중 오류가 발생했습니다.',
+          success: ''
+        });
       }
+    }
 
-      if (uploadedImages.length > 0) {
-        mediaPath = uploadedImages[0];
-        mediaType = 'image';
+    for (const file of imageFiles) {
+      try {
+        const imageUrl = await uploadFileToCloudinary(file.path, 'image');
+        uploadedImages.push(imageUrl);
+        deleteFileSafe(file.path);
+      } catch (e) {
+        deleteFileSafe(file.path);
+        return res.status(400).render('admin', {
+          categories,
+          posts,
+          admins,
+          isAdmin: true,
+          isSuperAdmin: req.session.adminRole === 'superadmin',
+          adminName: req.session.adminName || '',
+          error: e.message || '사진 업로드 중 오류가 발생했습니다.',
+          success: ''
+        });
       }
+    }
+
+    if (!mediaPath && uploadedImages.length > 0) {
+      mediaPath = uploadedImages[0];
+      mediaType = 'image';
     }
 
     const insertResult = await pool.query(

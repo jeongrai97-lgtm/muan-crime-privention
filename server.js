@@ -732,6 +732,7 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     { name: 'images', maxCount: 10 },
     { name: 'video', maxCount: 1 }
   ])(req, res, async function(err) {
+    try {
     const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
     const adminsResult = await pool.query(`
       SELECT id, username, display_name, role, is_active, created_at

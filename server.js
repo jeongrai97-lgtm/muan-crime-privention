@@ -318,9 +318,19 @@ app.get('/category/:category', async (req, res) => {
     [req.params.category]
   );
 
+  const posts = result.rows;
+
+  for (const post of posts) {
+    const imageResult = await pool.query(
+      `SELECT image_path FROM post_images WHERE post_id = $1 ORDER BY id ASC`,
+      [post.id]
+    );
+    post.images = imageResult.rows.map(row => row.image_path);
+  }
+
   res.render('category', {
     info,
-    posts: result.rows,
+    posts,
     isAdmin: !!req.session.isAdmin,
     adminId: req.session.adminId || null,
     adminRole: req.session.adminRole || ''

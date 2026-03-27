@@ -18,16 +18,31 @@
       <div class="post-list">
         <% posts.forEach(post => { %>
           <div class="post-card">
-            <% if (post.media_path && post.media_type === 'image') { %>
-              <img class="post-media" src="<%= post.media_path %>" 
-                   onclick="showImage('<%= post.media_path %>')" 
-                   style="cursor:zoom-in;">
-            <% } %>
-            <% if (post.media_path && post.media_type === 'video') { %>
-              <video class="post-video" controls playsinline preload="metadata" webkit-playsinline>
-                <source src="<%= post.media_path %>">
-              </video>
-            <% } %>
+          <% if (post.images && post.images.length > 0) { %>
+  <div class="post-image-gallery">
+    <% post.images.forEach(image => { %>
+      <img
+        class="post-media"
+        src="<%= image %>"
+        onclick="showImage('<%= image %>')"
+        style="cursor:zoom-in;"
+      >
+    <% }) %>
+  </div>
+<% } else if (post.media_path && post.media_type === 'image') { %>
+  <img
+    class="post-media"
+    src="<%= post.media_path %>"
+    onclick="showImage('<%= post.media_path %>')"
+    style="cursor:zoom-in;"
+  >
+<% } %>
+
+<% if (post.media_path && post.media_type === 'video') { %>
+  <video class="post-video" controls playsinline preload="metadata" webkit-playsinline>
+    <source src="<%= post.media_path %>">
+  </video>
+<% } %>
           <div class="post-body">
   <div class="post-title"><%= post.title %></div>
   <div class="post-meta">등록일: <%= post.created_at %></div>

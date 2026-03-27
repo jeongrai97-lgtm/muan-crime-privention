@@ -24,6 +24,7 @@ app.get('/practice-112', (req, res) => {
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-session-secret';
 const DEFAULT_SUPERADMIN_PASSWORD = 'muan0346';
 const DEFAULT_EDITOR_PASSWORD = 'andkstj1!';
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -37,7 +38,6 @@ function isCloudinaryConfigured() {
     process.env.CLOUDINARY_API_SECRET
   );
 }
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change-this-admin-password';
 
 const publicDir = path.join(__dirname, 'public');
 const uploadsDir = path.join(publicDir, 'uploads');
@@ -115,15 +115,6 @@ async function initDb() {
   `);
 }
 
-async function bootstrap() {
-  await initDb();
-  await seedInitialData();
-}
-
-bootstrap().catch(err => {
-  console.error('DB 초기화 오류:', err);
-});
-
 const superadminHash = bcrypt.hashSync(DEFAULT_SUPERADMIN_PASSWORD, 10);
 
 async function seedInitialData() {
@@ -140,7 +131,6 @@ async function seedInitialData() {
     );
   }
 
-  // 기존 카테고리 구조를 최신 구조로 자동 정리
   await pool.query(`
     UPDATE posts SET category = '__tmp_foreign__' WHERE category = 'foreign';
   `);
@@ -153,6 +143,15 @@ async function seedInitialData() {
     UPDATE posts SET category = 'notice' WHERE category = '__tmp_foreign__';
   `);
 }
+
+async function bootstrap() {
+  await initDb();
+  await seedInitialData();
+}
+
+bootstrap().catch(err => {
+  console.error('DB 초기화 오류:', err);
+});
 
 const categories = [
   { key: 'theft', name: '절도예방수칙', icon: '🚨' },
@@ -198,7 +197,9 @@ function getMediaKind(mimetype) {
 function deleteFileSafe(filePath) {
   if (!filePath) return;
   if (fs.existsSync(filePath)) {
-    try { fs.unlinkSync(filePath); } catch (e) {}
+    try {
+      fs.unlinkSync(filePath);
+    } catch (e) {}
   }
 }
 
@@ -237,7 +238,6 @@ function transcodeVideoToMp4(inputPath) {
   });
 }
 
-
 async function uploadFileToCloudinary(localPath, mediaType) {
   if (!isCloudinaryConfigured()) {
     throw new Error('Cloudinary 환경변수가 설정되지 않았습니다.');
@@ -262,7 +262,12 @@ async function uploadFileToCloudinary(localPath, mediaType) {
 
   const result = await cloudinary.uploader.upload(localPath, options);
 
-  if (mediaType === 'video' && result.eager && result.eager.length > 0 && result.eager[0].secure_url) {
+  if (
+    mediaType === 'video' &&
+    result.eager &&
+    result.eager.length > 0 &&
+    result.eager[0].secure_url
+  ) {
     return result.eager[0].secure_url;
   }
 
@@ -295,8 +300,7 @@ app.get('/manifest.json', (req, res) => {
   res.sendFile(path.join(publicDir, 'manifest.json'));
 });
 
-
-  app.get('/sw.js', (req, res) => {
+app.get('/sw.js', (req, res) => {
   res.set('Content-Type', 'application/javascript');
   res.sendFile(path.join(publicDir, 'sw.js'));
 });
@@ -405,89 +409,97 @@ app.get('/admin/posts/:id/edit', requireAdmin, async (req, res) => {
 });
 
 app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
-  upload.array('media', 10)(req, res, async function(err) {
-    const result = await pool.query(
-      'SELECT * FROM posts WHERE id = $1',
-      [req.params.id]
-    );
+  upload.single('media')(req, res, async function(err) {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM posts WHERE id = $1',
+        [req.params.id]
+      );
 
-    const post = result.rows[0];
-    if (!post) return res.redirect('/admin');
+      const post = result.rows[0];
+      if (!post) return res.redirect('/admin');
 
-    const isSuperAdmin = req.session.adminRole === 'superadmin';
-    const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
+      const isSuperAdmin = req.session.adminRole === 'superadmin';
+      const isAuthor = post.author_id && Number(post.author_id) === Number(req.session.adminId);
 
-    if (!isSuperAdmin && !isAuthor) {
-      return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
-    }
-
-    if (err) {
-      return res.status(400).render('edit', {
-        post,
-        categories,
-        isAdmin: true,
-        error: err.message || '업로드 중 오류가 발생했습니다.'
-      });
-    }
-
-    const { category, title, content, delete_media } = req.body;
-    if (!category || !title || !content) {
-      return res.status(400).render('edit', {
-        post,
-        categories,
-        isAdmin: true,
-        error: '카테고리, 제목, 내용을 모두 입력해주세요.'
-      });
-    }
-
-    let mediaPath = post.media_path || '';
-    let mediaType = post.media_type || '';
-
-    if (delete_media === '1' && mediaPath) {
-      const oldPath = path.join(publicDir, String(mediaPath).replace(/^\//, ''));
-      deleteFileSafe(oldPath);
-      mediaPath = '';
-      mediaType = '';
-    }
-
-    if (req.file) {
-      if (mediaPath && !String(mediaPath).includes('res.cloudinary.com')) {
-        const oldPath = path.join(publicDir, String(mediaPath).replace(/^\//, ''));
-        deleteFileSafe(oldPath);
+      if (!isSuperAdmin && !isAuthor) {
+        return res.status(403).send('본인이 작성한 게시글만 수정할 수 있습니다.');
       }
 
-      mediaPath = `/uploads/${req.file.filename}`;
-      mediaType = getMediaKind(req.file.mimetype);
-
-      try {
-        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
-        deleteFileSafe(req.file.path);
-      } catch (e) {
-        deleteFileSafe(req.file.path);
+      if (err) {
         return res.status(400).render('edit', {
           post,
           categories,
           isAdmin: true,
-          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.'
+          error: err.message || '업로드 중 오류가 발생했습니다.'
         });
       }
+
+      const { category, title, content, delete_media } = req.body;
+
+      if (!category || !title || !content) {
+        return res.status(400).render('edit', {
+          post,
+          categories,
+          isAdmin: true,
+          error: '카테고리, 제목, 내용을 모두 입력해주세요.'
+        });
+      }
+
+      let mediaPath = post.media_path || '';
+      let mediaType = post.media_type || '';
+
+      if (delete_media === '1' && mediaPath) {
+        if (!String(mediaPath).includes('res.cloudinary.com')) {
+          const oldPath = path.join(publicDir, String(mediaPath).replace(/^\//, ''));
+          deleteFileSafe(oldPath);
+        }
+        mediaPath = '';
+        mediaType = '';
+      }
+
+      if (req.file) {
+        if (mediaPath && !String(mediaPath).includes('res.cloudinary.com')) {
+          const oldPath = path.join(publicDir, String(mediaPath).replace(/^\//, ''));
+          deleteFileSafe(oldPath);
+        }
+
+        mediaPath = `/uploads/${req.file.filename}`;
+        mediaType = getMediaKind(req.file.mimetype);
+
+        try {
+          mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
+          deleteFileSafe(req.file.path);
+        } catch (e) {
+          deleteFileSafe(req.file.path);
+          return res.status(400).render('edit', {
+            post,
+            categories,
+            isAdmin: true,
+            error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.'
+          });
+        }
+      }
+
+      await pool.query(
+        `UPDATE posts
+         SET category = $1, title = $2, content = $3, media_path = $4, media_type = $5
+         WHERE id = $6`,
+        [
+          category,
+          title.trim(),
+          content.trim(),
+          mediaPath,
+          mediaType,
+          req.params.id
+        ]
+      );
+
+      return res.redirect('/category/' + category);
+    } catch (e) {
+      console.error('게시글 수정 오류:', e);
+      return res.status(500).send('게시글 수정 중 서버 오류가 발생했습니다.');
     }
-
-    await pool.query(
-      `UPDATE posts
-       SET category = $1, title = $2, content = $3, media_path = $4, media_type = $5
-       WHERE id = $6`,
-      [
-        category,
-        title.trim(),
-        content.trim(),
-        mediaPath,
-        mediaType,
-        req.params.id
-      ]
-    );
-
-    return res.redirect('/category/' + category);
   });
 });
 
@@ -511,7 +523,9 @@ app.post('/admin/posts/:id/delete', requireAdmin, async (req, res) => {
   if (post.media_path && !String(post.media_path).includes('res.cloudinary.com')) {
     const filePath = path.join(publicDir, String(post.media_path).replace(/^\//, ''));
     if (fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (e) {}
+      try {
+        fs.unlinkSync(filePath);
+      } catch (e) {}
     }
   }
 
@@ -689,50 +703,6 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     { name: 'video', maxCount: 1 }
   ])(req, res, async function(err) {
     try {
-    const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
-    const adminsResult = await pool.query(`
-      SELECT id, username, display_name, role, is_active, created_at
-      FROM admins
-      ORDER BY id ASC
-    `);
-
-    const posts = postsResult.rows;
-    const admins = adminsResult.rows;
-
-    if (err) {
-      return res.status(400).render('admin', {
-        categories,
-        posts,
-        admins,
-        isAdmin: true,
-        isSuperAdmin: req.session.adminRole === 'superadmin',
-        adminName: req.session.adminName || '',
-        error: err.message || '업로드 중 오류가 발생했습니다.',
-        success: ''
-      });
-    }
-
-    const { category, title, content } = req.body;
-
-    if (!category || !title || !content) {
-      return res.status(400).render('admin', {
-        categories,
-        posts,
-        admins,
-        isAdmin: true,
-        isSuperAdmin: req.session.adminRole === 'superadmin',
-        adminName: req.session.adminName || '',
-        error: '카테고리, 제목, 내용을 모두 입력해주세요.',
-        success: ''
-      });
-    }
-
-app.post('/admin/posts', requireAdmin, (req, res) => {
-  upload.fields([
-    { name: 'images', maxCount: 10 },
-    { name: 'video', maxCount: 1 }
-  ])(req, res, async function(err) {
-    try {
       const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
       const adminsResult = await pool.query(`
         SELECT id, username, display_name, role, is_active, created_at
@@ -855,24 +825,6 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       console.error('게시글 등록 오류:', e);
       return res.status(500).send('게시글 등록 중 서버 오류가 발생했습니다.');
     }
-  });
-});
-
-    await pool.query(
-      `INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        category,
-        title.trim(),
-        content.trim(),
-        mediaPath,
-        mediaType,
-        req.session.adminId || null,
-        req.session.adminName || '무안경찰서'
-      ]
-    );
-
-    return res.redirect('/category/' + category);
   });
 });
 

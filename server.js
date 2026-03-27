@@ -106,6 +106,15 @@ async function initDb() {
   `);
 }
 
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS post_images (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    image_path TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 async function bootstrap() {
   await initDb();
   await seedInitialData();
@@ -386,7 +395,7 @@ app.get('/admin/posts/:id/edit', requireAdmin, async (req, res) => {
 });
 
 app.post('/admin/posts/:id/edit', requireAdmin, (req, res) => {
-  upload.single('media')(req, res, async function(err) {
+  upload.array('media', 10)(req, res, async function(err) {
     const result = await pool.query(
       'SELECT * FROM posts WHERE id = $1',
       [req.params.id]
@@ -704,30 +713,121 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
       });
     }
 
+ app.post('/admin/posts', requireAdmin, (req, res) => {
+  upload.array('media', 10)(req, res, async function(err) {
+    const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
+    const adminsResult = await pool.query(`
+      SELECT id, username, display_name, role, is_active, created_at
+      FROM admins
+      ORDER BY id ASC
+    `);
+
+    const posts = postsResult.rows;
+    const admins = adminsResult.rows;
+
+    if (err) {
+      return res.status(400).render('admin', {
+        categories,
+        posts,
+        admins,
+        isAdmin: true,
+        isSuperAdmin: req.session.adminRole === 'superadmin',
+        adminName: req.session.adminName || '',
+        error: err.message || '업로드 중 오류가 발생했습니다.',
+        success: ''
+      });
+    }
+
+    const { category, title, content } = req.body;
+
+    if (!category || !title || !content) {
+      return res.status(400).render('admin', {
+        categories,
+        posts,
+        admins,
+        isAdmin: true,
+        isSuperAdmin: req.session.adminRole === 'superadmin',
+        adminName: req.session.adminName || '',
+        error: '카테고리, 제목, 내용을 모두 입력해주세요.',
+        success: ''
+      });
+    }
+
     let mediaPath = '';
     let mediaType = '';
+    let uploadedImages = [];
 
-    if (req.file) {
-      mediaType = getMediaKind(req.file.mimetype);
-      mediaPath = `/uploads/${req.file.filename}`;
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const kind = getMediaKind(file.mimetype);
 
-      try {
-        mediaPath = await uploadFileToCloudinary(req.file.path, mediaType);
-        deleteFileSafe(req.file.path);
-      } catch (e) {
-        deleteFileSafe(req.file.path);
-        return res.status(400).render('admin', {
-          categories,
-          posts,
-          admins,
-          isAdmin: true,
-          isSuperAdmin: req.session.adminRole === 'superadmin',
-          adminName: req.session.adminName || '',
-          error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
-          success: ''
-        });
+        if (kind !== 'image') {
+          deleteFileSafe(file.path);
+          return res.status(400).render('admin', {
+            categories,
+            posts,
+            admins,
+            isAdmin: true,
+            isSuperAdmin: req.session.adminRole === 'superadmin',
+            adminName: req.session.adminName || '',
+            error: '여러 장 업로드는 사진만 가능합니다.',
+            success: ''
+          });
+        }
+
+        try {
+          const imageUrl = await uploadFileToCloudinary(file.path, 'image');
+          uploadedImages.push(imageUrl);
+          deleteFileSafe(file.path);
+        } catch (e) {
+          deleteFileSafe(file.path);
+          return res.status(400).render('admin', {
+            categories,
+            posts,
+            admins,
+            isAdmin: true,
+            isSuperAdmin: req.session.adminRole === 'superadmin',
+            adminName: req.session.adminName || '',
+            error: e.message || 'Cloudinary 업로드 중 오류가 발생했습니다.',
+            success: ''
+          });
+        }
+      }
+
+      if (uploadedImages.length > 0) {
+        mediaPath = uploadedImages[0];
+        mediaType = 'image';
       }
     }
+
+    const insertResult = await pool.query(
+      `INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`,
+      [
+        category,
+        title.trim(),
+        content.trim(),
+        mediaPath,
+        mediaType,
+        req.session.adminId || null,
+        req.session.adminName || '무안경찰서'
+      ]
+    );
+
+    const postId = insertResult.rows[0].id;
+
+    for (const imagePath of uploadedImages) {
+      await pool.query(
+        `INSERT INTO post_images (post_id, image_path)
+         VALUES ($1, $2)`,
+        [postId, imagePath]
+      );
+    }
+
+    return res.redirect('/category/' + category);
+  });
+});
 
     await pool.query(
       `INSERT INTO posts (category, title, content, media_path, media_type, author_id, author_name)

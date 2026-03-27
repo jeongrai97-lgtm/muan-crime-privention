@@ -175,6 +175,12 @@ img,video{max-width:100%}
   font-size:15px;
 }
 
+.post-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
 .post-actions {
   margin-top: 12px !important;
   display: flex !important;
@@ -1398,4 +1404,18 @@ body {
     font-size: 16px;
     border-radius: 16px;
   }
+}
+
+.post-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.post-media {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+  object-fit: cover;
 }

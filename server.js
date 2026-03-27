@@ -688,6 +688,7 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     { name: 'images', maxCount: 10 },
     { name: 'video', maxCount: 1 }
   ])(req, res, async function(err) {
+    try {
     const postsResult = await pool.query(`SELECT * FROM posts ORDER BY id DESC`);
     const adminsResult = await pool.query(`
       SELECT id, username, display_name, role, is_active, created_at
@@ -849,6 +850,10 @@ app.post('/admin/posts', requireAdmin, (req, res) => {
     }
 
     return res.redirect('/category/' + category);
+    } catch (e) {
+  console.error('게시글 등록 오류:', e);
+  return res.status(500).send('게시글 등록 중 서버 오류가 발생했습니다.');
+}
   });
 });
 
